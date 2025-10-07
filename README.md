@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Capriccio Homemade Goods - CRM
 
-## Getting Started
+Sistema CRM desarrollado para **Capriccio Homemade Goods**, una chocolatería artesanal que gestiona pedidos a través de redes sociales (Instagram, WhatsApp, Messenger).
 
-First, run the development server:
+## 🛠️ Stack Tecnológico
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Framework:** Next.js 15+ (App Router)
+- **Estilos:** Tailwind CSS v4
+- **Lenguaje:** TypeScript
+- **Iconos:** Lucide React
+- **Utilidades:** clsx
+
+## 🎨 Características Implementadas
+
+### ✅ Página de Login
+- Diseño elegante con glassmorphism
+- Gradiente en tonos chocolate según la identidad de marca
+- Formulario funcional con validaciones
+- Redirección automática al dashboard
+
+### ✅ Sidebar Navigation
+- Navegación colapsable y responsive
+- Menús desplegables para redes sociales
+- Estados hover y activo
+- Adaptación móvil con overlay
+
+### ✅ Dashboard Principal
+- Cards de métricas con indicadores de cambio
+- Tabla de pedidos recientes
+- Panel de actividad de redes sociales
+- Feed de mensajes en tiempo real
+- Header con notificaciones
+
+## 🎨 Paleta de Colores
+
+```css
+--chocolate-dark: #6B4423    /* Color primario */
+--chocolate-hover: #5A3819   /* Hover states */
+--caramel: #D4A574          /* Color secundario */
+--cream: #E8D5C4            /* Color de acento */
+--warm-white: #FAF7F5       /* Fondo cálido */
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Instalación y Uso
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Clonar el repositorio**
+```bash
+git clone [url-del-repositorio]
+cd new-dashboard-capriccio
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Instalar dependencias**
+```bash
+npm install
+```
 
-## Learn More
+3. **Ejecutar el servidor de desarrollo**
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. **Abrir en el navegador**
+```
+http://localhost:3000
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📱 Rutas Disponibles
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `/` - Página de login
+- `/dashboard` - Dashboard principal (requiere "login")
 
-## Deploy on Vercel
+## 🎯 Funcionalidades por Implementar
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [ ] Sistema de autenticación real (NextAuth.js)
+- [ ] Integración con APIs de redes sociales
+- [ ] Base de datos (Supabase/Firebase)
+- [ ] Gestión completa de pedidos (CRUD)
+- [ ] Gestión de clientes
+- [ ] Sistema de reportes
+- [ ] Configuraciones de usuario
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📖 Estructura del Proyecto
+
+```
+src/
+├── app/
+│   ├── dashboard/
+│   │   ├── layout.tsx      # Layout del dashboard
+│   │   └── page.tsx        # Página principal del dashboard
+│   ├── globals.css         # Estilos globales con variables CSS
+│   └── page.tsx           # Página de login
+└── components/
+    └── Sidebar.tsx        # Componente de navegación lateral
+```
+
+## 🎨 Componentes Reutilizables
+
+### MetricCard
+Tarjeta para mostrar métricas con indicadores de cambio:
+```tsx
+<MetricCard
+  title="Pedidos Hoy"
+  value="15"
+  change="+12%"
+  icon={Package}
+  isPositive={true}
+/>
+```
+
+### Sidebar
+Sistema de navegación lateral responsive con soporte para submenús.
+
+## 📱 Diseño Responsive
+
+- **Mobile:** < 640px - Sidebar oculto (hamburger menu)
+- **Tablet:** 640px - 1024px - Sidebar colapsado por defecto
+- **Desktop:** > 1024px - Sidebar expandido
+
+## 🚀 Deploy
+
+El proyecto está configurado para despliegue en Vercel:
+
+```bash
+npm run build
+```
+
+## 📄 Licencia
+
+Este proyecto es privado y está desarrollado específicamente para Capriccio Homemade Goods.
