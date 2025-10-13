@@ -13,18 +13,21 @@ Sistema CRM desarrollado para **Capriccio Homemade Goods**, una chocolatería ar
 ## 🎨 Características Implementadas
 
 ### ✅ Página de Login
+
 - Diseño elegante con glassmorphism
 - Gradiente en tonos chocolate según la identidad de marca
 - Formulario funcional con validaciones
 - Redirección automática al dashboard
 
 ### ✅ Sidebar Navigation
+
 - Navegación colapsable y responsive
 - Menús desplegables para redes sociales
 - Estados hover y activo
 - Adaptación móvil con overlay
 
 ### ✅ Dashboard Principal
+
 - Cards de métricas con indicadores de cambio
 - Tabla de pedidos recientes
 - Panel de actividad de redes sociales
@@ -44,22 +47,26 @@ Sistema CRM desarrollado para **Capriccio Homemade Goods**, una chocolatería ar
 ## 🚀 Instalación y Uso
 
 1. **Clonar el repositorio**
+
 ```bash
 git clone [url-del-repositorio]
 cd new-dashboard-capriccio
 ```
 
 2. **Instalar dependencias**
+
 ```bash
 npm install
 ```
 
 3. **Ejecutar el servidor de desarrollo**
+
 ```bash
 npm run dev
 ```
 
 4. **Abrir en el navegador**
+
 ```
 http://localhost:3000
 ```
@@ -96,18 +103,21 @@ src/
 ## 🎨 Componentes Reutilizables
 
 ### MetricCard
+
 Tarjeta para mostrar métricas con indicadores de cambio:
+
 ```tsx
 <MetricCard
-  title="Pedidos Hoy"
-  value="15"
-  change="+12%"
+  title='Pedidos Hoy'
+  value='15'
+  change='+12%'
   icon={Package}
   isPositive={true}
 />
 ```
 
 ### Sidebar
+
 Sistema de navegación lateral responsive con soporte para submenús.
 
 ## 📱 Diseño Responsive
@@ -127,3 +137,7 @@ npm run build
 ## 📄 Licencia
 
 Este proyecto es privado y está desarrollado específicamente para Capriccio Homemade Goods.
+
+## Primeras instrucciones:
+
+Necesito implementar todos estos endpoints en este sistema, la idea es tener en la organización un usuario administrador, que es quien gestionara a los usuarios y sus roles, tambien podra ver el chat y las ordenes que se han generado en cada sucursal y los que tenga pendientes de asignar logistica, el otro tipo de usuario es el de logistica, este usuario es quien puede ver las conversaciones de los chats de las diferentes plataformas y el va a ver las ordenes que estan pendientes de asignar a sucursal y confirmar el día que se pidieron, y por último esta el tipo de usuario empleado, este usuario esta asignado a una sucrusal y vera las ordenes que el usuario de logistica asigno a esta sucursal para atender la orden y surtirla: https://api-meta-service.vercel.app/api/docs/ el backend esta en otro proyecto, y este sistema solo se enfocara en el front
