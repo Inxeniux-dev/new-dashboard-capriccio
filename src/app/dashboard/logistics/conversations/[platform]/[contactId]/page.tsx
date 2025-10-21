@@ -36,16 +36,16 @@ export default function ConversationDetailPage() {
 
         if (response.data?.conversation) {
           setConversation(response.data.conversation);
-        } else {
+        } else if (response.data?.messages) {
           // Create a conversation object from the response
           const conversationData: Conversation = {
             id: `${platform}-${contactId}`,
             platform,
             contact_id: contactId,
-            contact_name: response.data?.contact_name || contactId,
-            contact_phone: response.data?.contact_phone || "",
-            last_message: response.data?.messages?.[0]?.message_content || "",
-            last_message_time: response.data?.messages?.[0]?.timestamp || new Date().toISOString(),
+            contact_name: contactId,
+            contact_phone: "",
+            last_message: response.data.messages[0]?.message_content || "",
+            last_message_time: response.data.messages[0]?.timestamp || new Date().toISOString(),
             unread_count: 0,
             conversation_status: "active",
             ai_enabled: false,

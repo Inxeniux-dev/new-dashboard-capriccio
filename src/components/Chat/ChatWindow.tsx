@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Send, Paperclip, Image, Phone, Video, MoreVertical, ArrowLeft, Bot, User, UserCheck } from "lucide-react";
-import type { Message, Conversation } from "@/types/api";
+import { Send, Paperclip, Image, Phone, Video, MoreVertical, ArrowLeft, Bot, User, UserCheck, RefreshCw } from "lucide-react";
+import type { Message, Conversation, MessageDirection } from "@/types/api";
 import apiClient from "@/lib/api-client";
 import { getMockMessages, simulateApiDelay } from "@/lib/mock-conversations";
 
@@ -16,7 +16,10 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadMessages();
@@ -26,6 +29,22 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Cerrar el menú al hacer clic fuera
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    }
+
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [showMenu]);
 
   const loadMessages = async () => {
     try {
@@ -50,13 +69,11 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         // Check different possible response structures
         if (response.data?.messages && Array.isArray(response.data.messages)) {
           messagesData = response.data.messages;
-        } else if (response.messages && Array.isArray(response.messages)) {
-          messagesData = response.messages;
         } else if (Array.isArray(response.data)) {
           // Sometimes the response might be directly an array of messages
-          messagesData = response.data;
+          messagesData = response.data as Message[];
         } else if (Array.isArray(response)) {
-          messagesData = response;
+          messagesData = response as Message[];
         }
 
         console.log(`Found ${messagesData.length} messages from conversation endpoint`);
@@ -76,11 +93,9 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           console.log("Messages/all endpoint response:", messagesResponse);
 
           if (Array.isArray(messagesResponse.data)) {
-            messagesData = messagesResponse.data;
-          } else if (Array.isArray(messagesResponse.messages)) {
-            messagesData = messagesResponse.messages;
+            messagesData = messagesResponse.data as Message[];
           } else if (Array.isArray(messagesResponse)) {
-            messagesData = messagesResponse;
+            messagesData = messagesResponse as Message[];
           }
 
           console.log(`Found ${messagesData.length} messages from messages endpoint`);
@@ -126,61 +141,98 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       }
 
       // Filter and validate messages
-      messagesData = messagesData.filter(msg =>
+      messagesData = messagesData.filter((msg: Message | Record<string, unknown>) =>
         msg &&
-        (msg.message_content || msg.text || msg.body || msg.content) &&
-        (msg.timestamp || msg.created_at || msg.date)
-      );
+        ((msg as Message).message_content || (msg as Record<string, unknown>).text || (msg as Record<string, unknown>).body || (msg as Record<string, unknown>).content) &&
+        ((msg as Message).timestamp || (msg as Message).created_at || (msg as Record<string, unknown>).date)
+      ) as Message[];
 
       // Transform messages to ensure consistent structure
-      const transformedMessages = messagesData.map(msg => {
-        // Determinar la dirección correcta del mensaje
-        let direction = msg.direction;
+      const transformedMessages = messagesData.map((msg: Message | Record<string, unknown>) => {
+        const msgAny = msg as Record<string, unknown>;
 
-        // Si no hay dirección, intentar determinarla
-        if (!direction) {
-          if (msg.from_me !== undefined) {
-            direction = msg.from_me ? "outgoing" : "incoming";
-          } else if (msg.from === "business" || msg.from === "agent" || msg.sender === "agent") {
-            direction = "outgoing";
-          } else if (msg.to === "business" || msg.recipient === "business") {
-            direction = "incoming";
-          } else {
-            // Por defecto, si el remitente coincide con el contacto, es entrante
-            direction = (msg.from === conversation.contact_id ||
-                        msg.from === conversation.contact_name ||
-                        msg.from === conversation.contact_phone) ? "incoming" : "outgoing";
+        // 🔑 USAR LOS CAMPOS DEL BACKEND: is_from_contact y sent_by_user
+        const isFromContact = (msg as Message).is_from_contact ?? msgAny.is_from_contact;
+        const sentByUser = (msg as Message).sent_by_user ?? msgAny.sent_by_user;
+
+        // Determinar la dirección basada en is_from_contact
+        let direction: MessageDirection;
+        if (isFromContact !== undefined) {
+          // Si tenemos is_from_contact, usarlo como fuente de verdad
+          direction = isFromContact ? "incoming" : "outgoing";
+        } else {
+          // Fallback a la lógica anterior si no viene is_from_contact
+          direction = (msg as Message).direction;
+          if (!direction) {
+            if (msgAny.from_me !== undefined) {
+              direction = msgAny.from_me ? "outgoing" : "incoming";
+            } else if (msgAny.from === "business" || msgAny.from === "agent" || msgAny.sender === "agent") {
+              direction = "outgoing";
+            } else if (msgAny.to === "business" || msgAny.recipient === "business") {
+              direction = "incoming";
+            } else {
+              direction = (msgAny.from === conversation.contact_id ||
+                          msgAny.from === conversation.contact_name ||
+                          msgAny.from === conversation.contact_phone) ? "incoming" : "outgoing";
+            }
           }
         }
 
         // Determinar si es una respuesta de IA
-        const isAIResponse = msg.ai_response_generated === true ||
-                            msg.is_ai_response === true ||
-                            (msg.metadata && msg.metadata.ai_generated === true) ||
-                            (msg.metadata && msg.metadata.is_automated === true);
+        const isAIResponse = (msg as Message).ai_response_generated === true ||
+                            msgAny.is_ai_response === true ||
+                            (typeof (msg as Message).metadata === 'object' && (msg as Message).metadata && 'ai_generated' in (msg as Message).metadata! && ((msg as Message).metadata as Record<string, unknown>).ai_generated === true) ||
+                            (typeof (msg as Message).metadata === 'object' && (msg as Message).metadata && 'is_automated' in (msg as Message).metadata! && ((msg as Message).metadata as Record<string, unknown>).is_automated === true);
 
-        // Determinar el origen real del mensaje
-        const sender_type = msg.sender_type || msg.message_sender ||
-                           (direction === "incoming" ? "client" :
-                            isAIResponse ? "ai" : "agent");
+        // Determinar el sender_type usando la lógica del backend
+        let sender_type: "client" | "ai" | "agent";
+
+        if (isFromContact === true) {
+          // true = mensaje del cliente
+          sender_type = "client";
+        } else if (isFromContact === false) {
+          // false = mensaje del sistema
+          if (sentByUser === "Asistente IA" || isAIResponse) {
+            sender_type = "ai";
+          } else {
+            sender_type = "agent";
+          }
+        } else {
+          // Fallback a la lógica anterior
+          const existingSenderType = (msg as Message).sender_type;
+          const msgSender = msgAny.message_sender as string | undefined;
+
+          if (existingSenderType && ["client", "ai", "agent"].includes(existingSenderType)) {
+            sender_type = existingSenderType;
+          } else if (msgSender && ["client", "ai", "agent"].includes(msgSender)) {
+            sender_type = msgSender as "client" | "ai" | "agent";
+          } else {
+            sender_type = direction === "incoming" ? "client" : (isAIResponse ? "ai" : "agent");
+          }
+        }
 
         return {
-          id: msg.id || msg.message_id || Math.random().toString(36).substr(2, 9),
-          message_id: msg.message_id || msg.id || "",
-          platform: msg.platform || conversation.platform,
-          from_number: msg.from_number || msg.from || msg.sender || "",
-          to_number: msg.to_number || msg.to || msg.recipient || "",
+          id: (msg as Message).id || msgAny.message_id || Math.random().toString(36).substr(2, 9),
+          message_id: (msg as Message).message_id || msgAny.id || "",
+          conversation_id: (msg as Message).conversation_id || msgAny.conversation_id,
+          contact_id: (msg as Message).contact_id || msgAny.contact_id,
+          platform: (msg as Message).platform || conversation.platform,
+          from_number: (msg as Message).from_number || msgAny.from || msgAny.sender || "",
+          to_number: (msg as Message).to_number || msgAny.to || msgAny.recipient || "",
           direction: direction,
-          message_content: msg.message_content || msg.text || msg.body || msg.content || "",
-          message_type: msg.message_type || msg.type || "text",
-          timestamp: msg.timestamp || msg.created_at || msg.date || new Date().toISOString(),
-          created_at: msg.created_at || msg.timestamp || new Date().toISOString(),
-          read: msg.read !== undefined ? msg.read : true,
-          status: msg.status || "delivered",
-          metadata: msg.metadata || {},
-          ai_enabled: msg.ai_enabled || false,
+          message_content: (msg as Message).message_content || msgAny.text || msgAny.body || msgAny.content || "",
+          message_type: (msg as Message).message_type || msgAny.type || "text",
+          timestamp: (msg as Message).timestamp || (msg as Message).created_at || msgAny.date || new Date().toISOString(),
+          created_at: (msg as Message).created_at || (msg as Message).timestamp || new Date().toISOString(),
+          read: (msg as Message).read !== undefined ? (msg as Message).read :
+                (msg as Message).is_read !== undefined ? (msg as Message).is_read : true,
+          status: (msg as Message).status || "delivered",
+          metadata: (msg as Message).metadata || {},
+          ai_enabled: (msg as Message).ai_enabled || false,
           ai_response_generated: isAIResponse,
           sender_type: sender_type,
+          is_from_contact: isFromContact,
+          sent_by_user: sentByUser,
         } as Message;
       });
 
@@ -296,6 +348,22 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     }
   };
 
+  const handleRefreshConversation = async () => {
+    try {
+      setRefreshing(true);
+      setShowMenu(false);
+      await loadMessages();
+      // Asegurar que se desplace al mensaje más reciente después de actualizar
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    } catch (error) {
+      console.error("Error refreshing conversation:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
       {/* Header */}
@@ -328,9 +396,28 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
             <Video size={18} className="text-gray-600" />
           </button>
-          <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
-            <MoreVertical size={18} className="text-gray-600" />
-          </button>
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <MoreVertical size={18} className="text-gray-600" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {showMenu && (
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <button
+                  onClick={handleRefreshConversation}
+                  disabled={refreshing}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+                  {refreshing ? "Actualizando..." : "Actualizar conversación"}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -439,82 +526,51 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({ message, formatTime, contactName }: MessageBubbleProps) {
-  const isOutgoing = message.direction === "outgoing";
+  // 🔑 USAR is_from_contact COMO FUENTE PRIMARIA DE VERDAD
+  // is_from_contact === true → mensaje del cliente (izquierda)
+  // is_from_contact === false → mensaje del sistema (derecha)
+  const isFromClient = message.is_from_contact === true ||
+                       (message.is_from_contact === undefined && message.sender_type === "client");
 
-  // Usar sender_type si está disponible, si no, inferir del mensaje
+  // Determinar el tipo de remitente usando sender_type (ya calculado correctamente en loadMessages)
   const getSenderInfo = () => {
-    // Primero, verificar si tenemos sender_type explícito
-    if (message.sender_type) {
-      switch (message.sender_type) {
-        case "client":
-          return {
-            name: contactName,
-            icon: <User size={14} />,
-            color: "text-blue-600",
-            bgColor: "bg-blue-50",
-            label: "Cliente",
-            bubbleColor: "bg-white text-gray-800 border border-gray-200"
-          };
-        case "ai":
-          return {
-            name: "Asistente IA",
-            icon: <Bot size={14} />,
-            color: "text-purple-600",
-            bgColor: "bg-purple-50",
-            label: "Respuesta Automática",
-            bubbleColor: "bg-purple-500 text-white"
-          };
-        case "agent":
-          return {
-            name: "Agente",
-            icon: <UserCheck size={14} />,
-            color: "text-green-600",
-            bgColor: "bg-green-50",
-            label: "Agente Humano",
-            bubbleColor: "bg-primary text-white"
-          };
-      }
-    }
-
-    // Fallback: inferir del mensaje
-    if (!isOutgoing) {
-      // Mensaje entrante = Cliente
-      return {
-        name: contactName,
-        icon: <User size={14} />,
-        color: "text-blue-600",
-        bgColor: "bg-blue-50",
-        label: "Cliente",
-        bubbleColor: "bg-white text-gray-800 border border-gray-200"
-      };
-    } else if (message.ai_response_generated === true) {
-      // Mensaje saliente con IA = Respuesta automática
-      return {
-        name: "Asistente IA",
-        icon: <Bot size={14} />,
-        color: "text-purple-600",
-        bgColor: "bg-purple-50",
-        label: "Respuesta Automática",
-        bubbleColor: "bg-purple-500 text-white"
-      };
-    } else {
-      // Mensaje saliente sin IA = Agente humano
-      return {
-        name: "Agente",
-        icon: <UserCheck size={14} />,
-        color: "text-green-600",
-        bgColor: "bg-green-50",
-        label: "Agente Humano",
-        bubbleColor: "bg-primary text-white"
-      };
+    switch (message.sender_type) {
+      case "client":
+        return {
+          name: contactName,
+          icon: <User size={14} />,
+          color: "text-blue-600",
+          bgColor: "bg-blue-50",
+          label: "Cliente",
+          bubbleColor: "bg-white text-gray-800 border border-gray-200"
+        };
+      case "ai":
+        return {
+          name: message.sent_by_user || "Asistente IA",
+          icon: <Bot size={14} />,
+          color: "text-purple-600",
+          bgColor: "bg-purple-50",
+          label: "Respuesta Automática",
+          bubbleColor: "bg-purple-500 text-white"
+        };
+      case "agent":
+      default:
+        return {
+          name: message.sent_by_user || "Agente",
+          icon: <UserCheck size={14} />,
+          color: "text-green-600",
+          bgColor: "bg-green-50",
+          label: "Agente Humano",
+          bubbleColor: "bg-primary text-white"
+        };
     }
   };
 
   const senderInfo = getSenderInfo();
 
   return (
-    <div className={`flex ${isOutgoing ? "justify-end" : "justify-start"} mb-4`}>
-      <div className={`flex ${isOutgoing ? "flex-row-reverse" : "flex-row"} gap-2 max-w-[70%]`}>
+    <div className={`flex ${isFromClient ? "justify-start" : "justify-end"} mb-4`}>
+      <div className={`flex ${isFromClient ? "flex-row" : "flex-row-reverse"} gap-2 max-w-[70%]`}>
         {/* Avatar del remitente */}
         <div className="flex-shrink-0">
           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${senderInfo.bgColor} ${senderInfo.color}`}>
@@ -525,7 +581,7 @@ function MessageBubble({ message, formatTime, contactName }: MessageBubbleProps)
         {/* Contenedor del mensaje */}
         <div className="flex flex-col">
           {/* Nombre del remitente y etiqueta */}
-          <div className={`flex items-center gap-2 mb-1 ${isOutgoing ? "justify-end" : "justify-start"}`}>
+          <div className={`flex items-center gap-2 mb-1 ${isFromClient ? "justify-start" : "justify-end"}`}>
             <span className="text-xs font-medium text-gray-600">{senderInfo.name}</span>
             <span className={`text-xs px-2 py-0.5 rounded-full ${senderInfo.bgColor} ${senderInfo.color}`}>
               {senderInfo.label}
@@ -541,7 +597,7 @@ function MessageBubble({ message, formatTime, contactName }: MessageBubbleProps)
               message.sender_type === "client" ? "text-gray-500" : "text-white/70"
             }`}>
               <span>{formatTime(message.timestamp)}</span>
-              {isOutgoing && (
+              {!isFromClient && (
                 <span className="ml-1">
                   {message.status === "read" && "✓✓"}
                   {message.status === "delivered" && "✓✓"}

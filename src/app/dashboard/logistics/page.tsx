@@ -31,7 +31,7 @@ export default function LogisticsDashboardPage() {
       setLoadingData(true);
 
       // Cargar órdenes pendientes
-      const ordersResponse = await apiClient.logistics.getPendingOrders({ limit: 10 }) as any;
+      const ordersResponse = await apiClient.logistics.getPendingOrders({ limit: 10 }) as { orders?: Order[]; data?: Order[] };
       const orders = ordersResponse.orders || ordersResponse.data || [];
       const unassigned = orders.filter((o: Order) => !o.store_id || o.status === "pending_logistics");
       setUnassignedOrders(unassigned);
@@ -52,8 +52,7 @@ export default function LogisticsDashboardPage() {
       setStats({
         pendingAssignments: unassigned.length,
         todayDeliveries: Math.floor(Math.random() * 10) + 5, // Mock temporal
-        activeConversations: conversationStats.data?.totalConversations ||
-                           conversationStats.data?.active_conversations || 0,
+        activeConversations: conversationStats.data?.active_conversations || 0,
         unassignedOrders: unassigned.length,
       });
     } catch (error) {
@@ -154,7 +153,7 @@ export default function LogisticsDashboardPage() {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="font-semibold text-gray-800">
-                        {order.customer_name || order.metadata?.customer_name || "Cliente"}
+                        {order.customer_name || (typeof order.metadata?.customer_name === 'string' ? order.metadata.customer_name : '') || "Cliente"}
                       </p>
                       <p className="text-sm text-gray-600">{order.customer_phone}</p>
                     </div>

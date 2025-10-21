@@ -39,7 +39,7 @@ export default function LogisticsConversationsPage() {
           <ConversationsList
             onSelectConversation={setSelectedConversation}
             selectedConversationId={selectedConversation?.id}
-            platform={platform as any}
+            platform={platform as "whatsapp" | "messenger" | "instagram" | "facebook" | undefined}
           />
         </div>
 

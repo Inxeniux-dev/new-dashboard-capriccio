@@ -231,7 +231,7 @@ export default function AIConfigPage() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as "general" | "prompt" | "features" | "schedule" | "test")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                   activeTab === tab.id
                     ? "bg-primary text-white"

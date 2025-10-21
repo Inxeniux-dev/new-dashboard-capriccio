@@ -9,7 +9,10 @@
       "Bash(curl:*)",
       "Bash(lsof:*)",
       "Bash(node:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(for file in /Users/dramirez/Development/Inxeniux/Capriccio/new-dashboard-capriccio/src/app/dashboard/logistics/{page,stats/page,calendar/page,assignments/page,conversations/page}.tsx)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

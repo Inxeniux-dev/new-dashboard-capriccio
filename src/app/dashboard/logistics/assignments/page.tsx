@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
 import { Truck, Package, Building2, Calendar, Clock, CheckCircle, XCircle, AlertCircle, ArrowRight } from "lucide-react";
 import apiClient from "@/lib/api-client";
-import type { Order, Branch } from "@/types/api";
+import type { Order, Branch, OrderStatus } from "@/types/api";
 
 interface Assignment {
   branch: Branch;
@@ -34,7 +34,7 @@ export default function LogisticsAssignmentsPage() {
       setLoadingData(true);
 
       // Cargar órdenes
-      const ordersResponse = await apiClient.logistics.getPendingOrders({ limit: 200 }) as any;
+      const ordersResponse = await apiClient.logistics.getPendingOrders({ limit: 200 }) as { orders?: Order[]; data?: Order[] };
       const ordersData = ordersResponse.orders || ordersResponse.data || [];
 
       // Cargar sucursales disponibles desde iPOS locations
@@ -135,7 +135,7 @@ export default function LogisticsAssignmentsPage() {
       setAssigning(true);
 
       // Intentar asignar usando el endpoint de órdenes
-      await apiClient.orders.assignToBranch(selectedOrder.id, {
+      await apiClient.orders.assignToBranch(String(selectedOrder.id), {
         branch_id: selectedBranch,
         delivery_date: deliveryDate,
       });
@@ -157,7 +157,7 @@ export default function LogisticsAssignmentsPage() {
   const handleUpdateStatus = async (orderId: string | number, newStatus: string) => {
     try {
       await apiClient.orders.updateStatus(String(orderId), {
-        status: newStatus as any,
+        status: newStatus as OrderStatus,
       });
       alert(`Estado actualizado a: ${newStatus}`);
       loadData();
@@ -249,7 +249,7 @@ export default function LogisticsAssignmentsPage() {
                     </span>
                   </div>
                   <p className="text-xs text-gray-600 mb-1">
-                    {order.customer_name || order.metadata?.customer_name || "Cliente"}
+                    {order.customer_name || (typeof order.metadata?.customer_name === 'string' ? order.metadata.customer_name : '') || "Cliente"}
                   </p>
                   <p className="text-xs text-gray-500">
                     {order.items?.length || order.order_items?.length || order.products?.length || 0} productos
@@ -319,7 +319,7 @@ export default function LogisticsAssignmentsPage() {
                           <StatusBadge status={order.status} size="xs" />
                         </div>
                         <p className="text-xs text-gray-600">
-                          {order.customer_name || order.metadata?.customer_name}
+                          {order.customer_name || (typeof order.metadata?.customer_name === 'string' ? order.metadata.customer_name : '') || "Cliente"}
                         </p>
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-xs text-gray-500">

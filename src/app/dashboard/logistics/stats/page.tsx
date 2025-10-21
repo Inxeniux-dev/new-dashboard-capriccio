@@ -58,7 +58,7 @@ export default function LogisticsStatsPage() {
       setLoadingData(true);
 
       // Cargar órdenes
-      const ordersResponse = await apiClient.orders.getAll({ limit: 500 }) as any;
+      const ordersResponse = await apiClient.orders.getAll({ limit: 500 }) as { data?: Order[]; orders?: Order[] };
       const ordersData = ordersResponse.orders || ordersResponse.data || [];
 
       // Filtrar por rango de tiempo

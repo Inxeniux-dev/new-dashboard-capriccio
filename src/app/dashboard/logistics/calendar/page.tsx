@@ -29,7 +29,7 @@ export default function LogisticsCalendarPage() {
       setLoadingData(true);
 
       // Cargar órdenes
-      const ordersResponse = await apiClient.orders.getAll({ limit: 200 }) as any;
+      const ordersResponse = await apiClient.orders.getAll({ limit: 200 }) as { data?: Order[]; orders?: Order[] };
       const ordersData = ordersResponse.orders || ordersResponse.data || [];
 
       // Filtrar órdenes con fecha de entrega
@@ -312,7 +312,7 @@ export default function LogisticsCalendarPage() {
 
 function DeliveryCard({ order, branches }: { order: Order; branches: Branch[] }) {
   const branch = branches.find(b => b.id === (order.store_id || order.branch_id));
-  const customerName = order.customer_name || order.metadata?.customer_name || "Cliente";
+  const customerName = order.customer_name || (typeof order.metadata?.customer_name === 'string' ? order.metadata.customer_name : '') || "Cliente";
 
   return (
     <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">

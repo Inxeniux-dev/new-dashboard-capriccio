@@ -97,7 +97,7 @@ export default function UsersManagementPage() {
 
       if (editingUser) {
         // Actualizar usuario existente
-        const updateData: any = {
+        const updateData: Record<string, string | undefined> = {
           email: formData.email,
           full_name: formData.full_name,
           role: formData.role,
@@ -404,7 +404,7 @@ function UserRow({
 }
 
 function RoleBadge({ role }: { role: string }) {
-  const roleConfig: Record<string, { label: string; color: string; icon: any }> = {
+  const roleConfig: Record<string, { label: string; color: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = {
     admin: { label: "Admin", color: "bg-purple-100 text-purple-800", icon: Shield },
     logistics: { label: "Logística", color: "bg-blue-100 text-blue-800", icon: UserIcon },
     logistica: { label: "Logística", color: "bg-blue-100 text-blue-800", icon: UserIcon },

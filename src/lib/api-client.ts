@@ -574,24 +574,21 @@ export const aiApi = {
 
 export const iposApi = {
   async getLocations(): Promise<ApiResponse<Branch[]>> {
-    const response = await fetchApi<any>("/api/ipos/locations");
+    const response = await fetchApi<{ success: boolean; data: Record<string, unknown>[] }>("/api/ipos/locations");
 
     // Transformar los datos del formato iPOS al formato Branch esperado
     if (response.success && response.data) {
-      const transformedData = response.data.map((location: any) => ({
-        id: location.ID || location.id,
-        name: location.Name || location.name,
-        type: location.Type || location.type,
-        status: location.Status || location.status,
-        price_type: location.PiceType || location.PriceType || location.price_type,
-        client_address: location.ClientAddress || location.client_address,
-        address: location.Address || location.address || "",
-        phone: location.Phone || location.phone || "",
+      const transformedData: Branch[] = response.data.map((location: Record<string, unknown>) => ({
+        id: String(location.ID || location.id || ""),
+        name: String(location.Name || location.name || ""),
+        address: String(location.Address || location.address || ""),
+        phone: String(location.Phone || location.phone || ""),
         active: location.Status === "ACTIVE" || location.status === "active",
-        // Mapear otros campos si existen
-        city: location.City || location.city || "",
-        state: location.State || location.state || "",
-        manager_id: location.ManagerID || location.manager_id || null,
+        city: String(location.City || location.city || ""),
+        state: String(location.State || location.state || ""),
+        manager_id: location.ManagerID || location.manager_id ? String(location.ManagerID || location.manager_id) : undefined,
+        created_at: String(location.created_at || location.CreatedAt || new Date().toISOString()),
+        updated_at: String(location.updated_at || location.UpdatedAt || new Date().toISOString()),
       }));
 
       return {
@@ -600,29 +597,26 @@ export const iposApi = {
       };
     }
 
-    return response;
+    return { success: response.success, data: response.data as unknown as Branch[] };
   },
 
   async getLocationById(locationId: string): Promise<ApiResponse<Branch>> {
-    const response = await fetchApi<any>(`/api/ipos/locations/${locationId}`);
+    const response = await fetchApi<{ success: boolean; data: Record<string, unknown> }>(`/api/ipos/locations/${locationId}`);
 
     // Transformar los datos del formato iPOS al formato Branch esperado
     if (response.success && response.data) {
       const location = response.data;
-      const transformedData = {
-        id: location.ID || location.id,
-        name: location.Name || location.name,
-        type: location.Type || location.type,
-        status: location.Status || location.status,
-        price_type: location.PiceType || location.PriceType || location.price_type,
-        client_address: location.ClientAddress || location.client_address,
-        address: location.Address || location.address || "",
-        phone: location.Phone || location.phone || "",
+      const transformedData: Branch = {
+        id: String(location.ID || location.id || ""),
+        name: String(location.Name || location.name || ""),
+        address: String(location.Address || location.address || ""),
+        phone: String(location.Phone || location.phone || ""),
         active: location.Status === "ACTIVE" || location.status === "active",
-        // Mapear otros campos si existen
-        city: location.City || location.city || "",
-        state: location.State || location.state || "",
-        manager_id: location.ManagerID || location.manager_id || null,
+        city: String(location.City || location.city || ""),
+        state: String(location.State || location.state || ""),
+        manager_id: location.ManagerID || location.manager_id ? String(location.ManagerID || location.manager_id) : undefined,
+        created_at: String(location.created_at || location.CreatedAt || new Date().toISOString()),
+        updated_at: String(location.updated_at || location.UpdatedAt || new Date().toISOString()),
       };
 
       return {
@@ -631,7 +625,7 @@ export const iposApi = {
       };
     }
 
-    return response;
+    return { success: response.success, data: response.data as unknown as Branch };
   },
 };
 

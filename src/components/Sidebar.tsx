@@ -39,7 +39,7 @@ interface SidebarProps {
 }
 
 interface MenuItem {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon?: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
   href: string;
   badge?: number | string;
@@ -387,7 +387,7 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
           const isActive = actualPath === item.href || actualPath?.startsWith(item.href.split('?')[0]);
           const hasSubmenu = item.submenu && item.submenu.length > 0;
           const isSubmenuExpanded = expandedSubmenu === item.href;
-          const Icon = item.icon;
+          const Icon = item.icon || (() => null);
 
           return (
             <div key={item.href}>
@@ -462,7 +462,7 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
                   {item.submenu?.map((subitem) => {
                     const isSubActive = actualPath === subitem.href ||
                                        actualPath?.includes(subitem.href.split('?')[0]);
-                    const SubIcon = subitem.icon;
+                    const SubIcon = subitem.icon || (() => null);
 
                     return (
                       <button
@@ -518,7 +518,7 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary mt-1">
                   {user?.role === "logistica" ? "Logística" :
                    user?.role === "empleado" ? "Empleado" :
-                   user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
+                   user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "Usuario"}
                 </span>
               </div>
             </div>

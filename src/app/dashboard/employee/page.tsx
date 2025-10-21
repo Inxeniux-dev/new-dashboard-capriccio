@@ -268,7 +268,7 @@ export default function EmployeeDashboardPage() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold mb-2">
-              {getGreeting()}, {user?.name || user?.full_name || "Empleado"}! 👋
+              {getGreeting()}, {user?.full_name || "Empleado"}! 👋
             </h1>
             <p className="text-white/80">
               Tienes {performance.tasks_pending} tareas pendientes para hoy
@@ -329,7 +329,7 @@ export default function EmployeeDashboardPage() {
                 <Filter size={18} className="text-gray-500" />
                 <select
                   value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value as any)}
+                  onChange={(e) => setFilterStatus(e.target.value as "all" | "pending" | "in_progress" | "completed")}
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
                 >
                   <option value="all">Todas</option>

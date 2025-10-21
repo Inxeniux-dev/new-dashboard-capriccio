@@ -32,7 +32,7 @@ export default function LogisticsOrdersPage() {
       setLoadingData(true);
 
       // Cargar órdenes - el backend devuelve un objeto con "orders"
-      const ordersResponse = await apiClient.logistics.getPendingOrders({ limit: 100 }) as any;
+      const ordersResponse = await apiClient.logistics.getPendingOrders({ limit: 100 }) as { orders?: Order[]; data?: Order[] };
       let ordersData = ordersResponse.orders || ordersResponse.data || [];
 
       // Filtrar según el estado seleccionado
@@ -103,7 +103,7 @@ export default function LogisticsOrdersPage() {
       setAssigning(true);
 
       // Llamar al API para asignar la orden
-      await apiClient.orders.assignToBranch(selectedOrder.id, {
+      await apiClient.orders.assignToBranch(String(selectedOrder.id), {
         branch_id: selectedBranch,
         delivery_date: deliveryDate,
       });
@@ -238,7 +238,7 @@ export default function LogisticsOrdersPage() {
               <div>
                 <p className="text-sm text-gray-600">Cliente</p>
                 <p className="font-semibold text-gray-800">
-                  {selectedOrder.customer_name || selectedOrder.metadata?.customer_name || "Cliente"}
+                  {selectedOrder.customer_name || (typeof selectedOrder.metadata?.customer_name === 'string' ? selectedOrder.metadata.customer_name : '') || "Cliente"}
                 </p>
                 <p className="text-sm text-gray-600">{selectedOrder.customer_phone}</p>
               </div>
@@ -351,8 +351,10 @@ export default function LogisticsOrdersPage() {
                 <div>
                   <span className="text-gray-600">Nombre:</span>
                   <span className="ml-2 font-medium text-gray-800">
-                    {detailOrder.customer_name || detailOrder.metadata?.customer_name ||
-                     detailOrder.metadata?.conversation_context?.ipos_client?.fullName || "No especificado"}
+                    {detailOrder.customer_name ||
+                     (typeof detailOrder.metadata?.customer_name === 'string' ? detailOrder.metadata.customer_name : '') ||
+                     (typeof detailOrder.metadata?.conversation_context === 'object' && detailOrder.metadata.conversation_context && 'ipos_client' in detailOrder.metadata.conversation_context ? String((detailOrder.metadata.conversation_context as Record<string, unknown>).ipos_client) : '') ||
+                     "No especificado"}
                   </span>
                 </div>
                 <div>
@@ -361,14 +363,19 @@ export default function LogisticsOrdersPage() {
                     {detailOrder.customer_phone || "No especificado"}
                   </span>
                 </div>
-                {detailOrder.metadata?.conversation_context?.ipos_client?.email && (
-                  <div>
-                    <span className="text-gray-600">Email:</span>
-                    <span className="ml-2 font-medium text-gray-800">
-                      {detailOrder.metadata.conversation_context.ipos_client.email}
-                    </span>
-                  </div>
-                )}
+                {(() => {
+                  const context = detailOrder.metadata?.conversation_context as Record<string, unknown> | undefined;
+                  const client = context?.ipos_client as Record<string, unknown> | undefined;
+                  const email = client?.email;
+                  return email && typeof email === 'string' ? (
+                    <div>
+                      <span className="text-gray-600">Email:</span>
+                      <span className="ml-2 font-medium text-gray-800">
+                        {email}
+                      </span>
+                    </div>
+                  ) : null;
+                })()}
                 <div className="col-span-2">
                   <span className="text-gray-600">Dirección de entrega:</span>
                   <span className="ml-2 font-medium text-gray-800">
@@ -378,25 +385,30 @@ export default function LogisticsOrdersPage() {
                         return detailOrder.delivery_address;
                       }
 
-                      const iposAddress = detailOrder.metadata?.conversation_context?.ipos_client?.address;
+                      const context = detailOrder.metadata?.conversation_context as Record<string, unknown> | undefined;
+                      const client = context?.ipos_client as Record<string, unknown> | undefined;
+                      const iposAddress = client?.address as Record<string, unknown> | undefined;
                       if (iposAddress) {
-                        return `${iposAddress.street} ${iposAddress.number}, ${iposAddress.suburb}, ${iposAddress.city}, ${iposAddress.state} C.P. ${iposAddress.zipCode}`;
+                        return `${iposAddress.street || ''} ${iposAddress.number || ''}, ${iposAddress.suburb || ''}, ${iposAddress.city || ''}, ${iposAddress.state || ''} C.P. ${iposAddress.zipCode || ''}`;
                       }
 
                       return "No especificada";
                     })()}
                   </span>
                 </div>
-                {detailOrder.metadata?.source && (
-                  <div>
-                    <span className="text-gray-600">Origen:</span>
-                    <span className="ml-2">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
-                        {detailOrder.metadata.source.replace('_', ' ').toUpperCase()}
+                {(() => {
+                  const source = detailOrder.metadata?.source;
+                  return source && typeof source === 'string' ? (
+                    <div>
+                      <span className="text-gray-600">Origen:</span>
+                      <span className="ml-2">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                          {source.replace('_', ' ').toUpperCase()}
+                        </span>
                       </span>
-                    </span>
-                  </div>
-                )}
+                    </div>
+                  ) : null;
+                })()}
                 {detailOrder.platform && (
                   <div>
                     <span className="text-gray-600">Plataforma:</span>
@@ -421,25 +433,34 @@ export default function LogisticsOrdersPage() {
                 Productos Solicitados ({detailOrder.products?.length || detailOrder.items?.length || detailOrder.order_items?.length || 0})
               </h3>
               <div className="space-y-3">
-                {(detailOrder.products || detailOrder.items || detailOrder.order_items || []).map((item: any, index: number) => {
+                {((detailOrder.products || detailOrder.items || detailOrder.order_items || []) as Record<string, unknown>[]).map((item: Record<string, unknown>, index: number) => {
                   // Handle different data structures
-                  const productInfo = item.product || item;
-                  const quantity = item.quantity || item.qty || 1;
-                  const price = productInfo.price || productInfo.unit_price || productInfo.displayPrice || 0;
-                  const name = productInfo.name || productInfo.product_name || "Producto";
-                  const description = productInfo.description || "";
-                  const sku = productInfo.sku || productInfo.SKU || "";
-                  const brand = productInfo.brand || productInfo.Brand || "";
-                  const category = productInfo.category || "";
-                  const weight = productInfo.weight || 0;
-                  const imageUrl = productInfo.image_url || productInfo.imageUrl ||
-                                   productInfo.iposData?.Pictures?.[0]?.PictureUrl || "";
-                  const variationInfo = productInfo.iposData?.ProductVariations?.find(
-                    (v: any) => v.ID === productInfo.variationId
-                  ) || {};
+                  const productInfo = (item.product || item) as Record<string, unknown>;
+                  const quantity = Number(item.quantity || item.qty || 1);
+                  const price = Number(productInfo.price || productInfo.unit_price || productInfo.displayPrice || 0);
+                  const name = String(productInfo.name || productInfo.product_name || "Producto");
+                  const description = String(productInfo.description || "");
+                  const sku = String(productInfo.sku || productInfo.SKU || "");
+                  const brand = String(productInfo.brand || productInfo.Brand || "");
+                  const category = String(productInfo.category || "");
+                  const weight = Number(productInfo.weight || 0);
+
+                  // Safely extract imageUrl from iposData
+                  const iposData = productInfo.iposData as Record<string, unknown> | undefined;
+                  const pictures = iposData?.Pictures as Array<Record<string, unknown>> | undefined;
+                  const pictureUrl = typeof pictures?.[0]?.PictureUrl === 'string' ? pictures[0].PictureUrl : undefined;
+                  const imageUrl = (typeof productInfo.image_url === 'string' ? productInfo.image_url : '') ||
+                                   (typeof productInfo.imageUrl === 'string' ? productInfo.imageUrl : '') ||
+                                   pictureUrl || "";
+
+                  // Safely extract variation info
+                  const productVariations = iposData?.ProductVariations as Array<Record<string, unknown>> | undefined;
+                  const variationInfo = productVariations?.find(
+                    (v: Record<string, unknown>) => v.ID === productInfo.variationId
+                  ) as Record<string, unknown> | undefined || {};
 
                   return (
-                    <div key={productInfo.id || index} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div key={String(productInfo.id || index)} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex gap-4">
                         {/* Product Image */}
                         {imageUrl && (
@@ -493,12 +514,15 @@ export default function LogisticsOrdersPage() {
                                 Peso: {weight} kg
                               </span>
                             )}
-                            {variationInfo.Attribute2 && (
-                              <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded">
-                                {variationInfo.Attribute2}
-                              </span>
-                            )}
-                            {productInfo.requiresShipping && (
+                            {(() => {
+                              const attr2 = variationInfo.Attribute2;
+                              return attr2 && typeof attr2 === 'string' ? (
+                                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded">
+                                  {attr2}
+                                </span>
+                              ) : null;
+                            })()}
+                            {productInfo.requiresShipping === true && (
                               <span className="px-2 py-1 bg-green-100 text-green-800 rounded">
                                 Requiere envío
                               </span>
@@ -528,7 +552,7 @@ export default function LogisticsOrdersPage() {
                 <div className="flex justify-between items-center border-t pt-2">
                   <span className="font-semibold text-gray-800">Total:</span>
                   <span className="text-xl font-bold text-primary">
-                    ${(detailOrder.total_amount || 0).toFixed(2)} {detailOrder.currency || "MXN"}
+                    ${(detailOrder.total_amount || 0).toFixed(2)} {(typeof detailOrder.metadata?.currency === 'string' ? detailOrder.metadata.currency : '') || "MXN"}
                   </span>
                 </div>
               </div>
@@ -608,7 +632,7 @@ export default function LogisticsOrdersPage() {
 }
 
 function OrderCard({ order, onAssign, onViewDetails }: { order: Order; onAssign: () => void; onViewDetails: () => void }) {
-  const customerName = order.customer_name || order.metadata?.customer_name || "Cliente";
+  const customerName = order.customer_name || (typeof order.metadata?.customer_name === 'string' ? order.metadata.customer_name : '') || "Cliente";
   const orderId = order.order_number || order.message_id || `#${order.id}`;
   const itemCount = order.items?.length || order.order_items?.length || order.products?.length || 0;
 

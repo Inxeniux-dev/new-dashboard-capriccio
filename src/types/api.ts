@@ -7,7 +7,7 @@ export type MessageDirection = "incoming" | "outgoing";
 export type MessageType = "text" | "image" | "audio" | "video" | "document" | "sticker" | "location" | "template" | "interactive";
 export type MessageStatus = "sent" | "delivered" | "read" | "failed" | "pending";
 export type UserRole = "admin" | "logistics" | "logistica" | "empleado" | "employee" | "manager";
-export type OrderStatus = "pending" | "pending_logistics" | "in_progress" | "completed" | "cancelled" | "assigned" | "unassigned";
+export type OrderStatus = "pending" | "pending_logistics" | "in_progress" | "completed" | "cancelled" | "assigned" | "unassigned" | "confirmed" | "in_transit" | "delivered";
 
 // ============================================
 // RESPUESTAS API
@@ -112,7 +112,7 @@ export interface Conversation {
   is_active?: boolean;
   conversation_status?: "active" | "archived" | "pending";
   assigned_to?: string | null;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at?: string;
   contact?: Contact;
@@ -138,6 +138,8 @@ export interface ConversationStats {
 export interface Message {
   id: number;
   message_id: string;
+  conversation_id?: string;
+  contact_id?: string;
   platform: Platform;
   from_number: string;
   to_number: string;
@@ -147,11 +149,15 @@ export interface Message {
   timestamp: string;
   created_at: string;
   read: boolean;
+  is_read?: boolean;
   status: MessageStatus;
   metadata?: Record<string, unknown>;
   ai_enabled?: boolean;
   ai_response_generated?: boolean;
   sender_type?: "client" | "ai" | "agent";
+  // Campos clave del backend para identificar participantes
+  is_from_contact?: boolean;  // true = mensaje del cliente, false = del sistema
+  sent_by_user?: string | null;  // "Asistente IA" si es del sistema, null si es del cliente
 }
 
 export interface SendMessageRequest {
@@ -195,8 +201,8 @@ export interface Order {
   customer_phone: string;
   customer_email?: string;
   items?: OrderItem[];
-  order_items?: any[];
-  products?: any[];
+  order_items?: Record<string, unknown>[];
+  products?: Record<string, unknown>[];
   total_amount: number;
   status: OrderStatus;
   branch_id?: string;
@@ -218,7 +224,7 @@ export interface Order {
   ipos_status?: string | null;
   created_at: string;
   updated_at: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface OrderItem {
