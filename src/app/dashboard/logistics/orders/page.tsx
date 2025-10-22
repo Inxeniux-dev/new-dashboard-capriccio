@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
-import { Package, Filter, Calendar, MapPin, User, Phone, Eye, ShoppingCart, DollarSign, Info, X } from "lucide-react";
+import { Package, Filter, Calendar, MapPin, User, Phone, Eye, ShoppingCart, Info, X } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import type { Order, Branch } from "@/types/api";
 
@@ -151,7 +151,7 @@ export default function LogisticsOrdersPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando órdenes...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Cargando órdenes...</p>
         </div>
       </div>
     );
@@ -162,16 +162,16 @@ export default function LogisticsOrdersPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Órdenes Pendientes</h1>
-          <p className="text-gray-600">Asigna órdenes a las sucursales</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Órdenes Pendientes</h1>
+          <p className="text-gray-600 dark:text-gray-300">Asigna órdenes a las sucursales</p>
         </div>
 
         <div className="flex items-center gap-3">
-          <Filter size={18} className="text-gray-500" />
+          <Filter size={18} className="text-gray-500 dark:text-gray-400" />
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-gray-900"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           >
             <option value="unassigned">Sin asignar</option>
             <option value="assigned">Asignadas</option>
@@ -182,26 +182,26 @@ export default function LogisticsOrdersPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <p className="text-gray-600 text-sm font-medium">Sin Asignar</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+          <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">Sin Asignar</p>
           <p className="text-2xl font-bold text-red-600 mt-1">
             {orders.filter((o) => !o.store_id || o.status === "pending_logistics").length}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <p className="text-gray-600 text-sm font-medium">Asignadas</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+          <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">Asignadas</p>
           <p className="text-2xl font-bold text-blue-600 mt-1">
             {orders.filter((o) => o.store_id && o.status !== "pending_logistics" && o.status !== "completed").length}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <p className="text-gray-600 text-sm font-medium">Total Órdenes</p>
-          <p className="text-2xl font-bold text-gray-800 mt-1">{orders.length}</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+          <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">Total Órdenes</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100 mt-1">{orders.length}</p>
         </div>
       </div>
 
       {/* Orders Grid */}
-      <div className="bg-white rounded-xl shadow-md p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {orders.length > 0 ? (
             orders.map((order) => (
@@ -214,8 +214,8 @@ export default function LogisticsOrdersPage() {
             ))
           ) : (
             <div className="col-span-full text-center py-12">
-              <Package className="text-gray-300 mx-auto mb-4" size={64} />
-              <p className="text-gray-500 text-lg font-medium">No hay órdenes {filterStatus === "unassigned" ? "sin asignar" : ""}</p>
+              <Package className="text-gray-300 dark:text-gray-600 mx-auto mb-4" size={64} />
+              <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">No hay órdenes {filterStatus === "unassigned" ? "sin asignar" : ""}</p>
             </div>
           )}
         </div>
@@ -224,33 +224,33 @@ export default function LogisticsOrdersPage() {
       {/* Assign Modal */}
       {showAssignModal && selectedOrder && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Asignar Orden</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Asignar Orden</h2>
 
             <div className="space-y-4 mb-6">
               <div>
-                <p className="text-sm text-gray-600">Orden</p>
-                <p className="font-bold text-gray-800">
+                <p className="text-sm text-gray-600 dark:text-gray-300">Orden</p>
+                <p className="font-bold text-gray-800 dark:text-gray-100">
                   {selectedOrder.order_number || selectedOrder.message_id || `#${selectedOrder.id}`}
                 </p>
               </div>
 
               <div>
-                <p className="text-sm text-gray-600">Cliente</p>
-                <p className="font-semibold text-gray-800">
+                <p className="text-sm text-gray-600 dark:text-gray-300">Cliente</p>
+                <p className="font-semibold text-gray-800 dark:text-gray-100">
                   {selectedOrder.customer_name || (typeof selectedOrder.metadata?.customer_name === 'string' ? selectedOrder.metadata.customer_name : '') || "Cliente"}
                 </p>
-                <p className="text-sm text-gray-600">{selectedOrder.customer_phone}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{selectedOrder.customer_phone}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Sucursal Disponible
                 </label>
                 <select
                   value={selectedBranch}
                   onChange={(e) => setSelectedBranch(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   required
                 >
                   <option value="">Selecciona una sucursal</option>
@@ -265,13 +265,13 @@ export default function LogisticsOrdersPage() {
                   )}
                 </select>
                 {selectedBranch && branches.find(b => b.id === selectedBranch)?.address && (
-                  <div className="mt-2 p-2 bg-gray-50 rounded-lg">
-                    <p className="text-xs text-gray-600">
+                  <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                    <p className="text-xs text-gray-600 dark:text-gray-300">
                       <MapPin size={12} className="inline mr-1" />
                       {branches.find(b => b.id === selectedBranch)?.address}
                     </p>
                     {branches.find(b => b.id === selectedBranch)?.phone && (
-                      <p className="text-xs text-gray-600 mt-1">
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                         <Phone size={12} className="inline mr-1" />
                         {branches.find(b => b.id === selectedBranch)?.phone}
                       </p>
@@ -281,14 +281,14 @@ export default function LogisticsOrdersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Fecha de Entrega
                 </label>
                 <input
                   type="date"
                   value={deliveryDate}
                   onChange={(e) => setDeliveryDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   required
                 />
               </div>
@@ -302,7 +302,7 @@ export default function LogisticsOrdersPage() {
                   setSelectedBranch("");
                   setDeliveryDate("");
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 disabled={assigning}
               >
                 Cancelar
@@ -322,11 +322,11 @@ export default function LogisticsOrdersPage() {
       {/* Order Details Modal */}
       {showDetailsModal && detailOrder && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-800">Detalle de la Orden</h2>
-                <p className="text-gray-600">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Detalle de la Orden</h2>
+                <p className="text-gray-600 dark:text-gray-300">
                   {detailOrder.order_number || detailOrder.message_id || `#${detailOrder.id}`}
                 </p>
               </div>
@@ -335,22 +335,22 @@ export default function LogisticsOrdersPage() {
                   setShowDetailsModal(false);
                   setDetailOrder(null);
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
 
             {/* Customer Information */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2 flex items-center gap-2">
                 <User size={18} />
                 Información del Cliente
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-gray-600">Nombre:</span>
-                  <span className="ml-2 font-medium text-gray-800">
+                  <span className="text-gray-600 dark:text-gray-300">Nombre:</span>
+                  <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
                     {detailOrder.customer_name ||
                      (typeof detailOrder.metadata?.customer_name === 'string' ? detailOrder.metadata.customer_name : '') ||
                      (typeof detailOrder.metadata?.conversation_context === 'object' && detailOrder.metadata.conversation_context && 'ipos_client' in detailOrder.metadata.conversation_context ? String((detailOrder.metadata.conversation_context as Record<string, unknown>).ipos_client) : '') ||
@@ -358,8 +358,8 @@ export default function LogisticsOrdersPage() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600">Teléfono:</span>
-                  <span className="ml-2 font-medium text-gray-800">
+                  <span className="text-gray-600 dark:text-gray-300">Teléfono:</span>
+                  <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
                     {detailOrder.customer_phone || "No especificado"}
                   </span>
                 </div>
@@ -369,16 +369,16 @@ export default function LogisticsOrdersPage() {
                   const email = client?.email;
                   return email && typeof email === 'string' ? (
                     <div>
-                      <span className="text-gray-600">Email:</span>
-                      <span className="ml-2 font-medium text-gray-800">
+                      <span className="text-gray-600 dark:text-gray-300">Email:</span>
+                      <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
                         {email}
                       </span>
                     </div>
                   ) : null;
                 })()}
                 <div className="col-span-2">
-                  <span className="text-gray-600">Dirección de entrega:</span>
-                  <span className="ml-2 font-medium text-gray-800">
+                  <span className="text-gray-600 dark:text-gray-300">Dirección de entrega:</span>
+                  <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
                     {(() => {
                       // Try to get address from different sources
                       if (detailOrder.delivery_address) {
@@ -400,7 +400,7 @@ export default function LogisticsOrdersPage() {
                   const source = detailOrder.metadata?.source;
                   return source && typeof source === 'string' ? (
                     <div>
-                      <span className="text-gray-600">Origen:</span>
+                      <span className="text-gray-600 dark:text-gray-300">Origen:</span>
                       <span className="ml-2">
                         <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
                           {source.replace('_', ' ').toUpperCase()}
@@ -411,7 +411,7 @@ export default function LogisticsOrdersPage() {
                 })()}
                 {detailOrder.platform && (
                   <div>
-                    <span className="text-gray-600">Plataforma:</span>
+                    <span className="text-gray-600 dark:text-gray-300">Plataforma:</span>
                     <span className="ml-2">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         detailOrder.platform === 'whatsapp' ? 'bg-green-100 text-green-800' :
@@ -428,7 +428,7 @@ export default function LogisticsOrdersPage() {
 
             {/* Products List */}
             <div className="mb-4">
-              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
                 <ShoppingCart size={18} />
                 Productos Solicitados ({detailOrder.products?.length || detailOrder.items?.length || detailOrder.order_items?.length || 0})
               </h3>
@@ -460,11 +460,12 @@ export default function LogisticsOrdersPage() {
                   ) as Record<string, unknown> | undefined || {};
 
                   return (
-                    <div key={String(productInfo.id || index)} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div key={String(productInfo.id || index)} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex gap-4">
                         {/* Product Image */}
                         {imageUrl && (
                           <div className="flex-shrink-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={imageUrl}
                               alt={name}
@@ -481,20 +482,20 @@ export default function LogisticsOrdersPage() {
                         <div className="flex-1">
                           <div className="flex justify-between items-start mb-2">
                             <div>
-                              <h4 className="font-semibold text-gray-800 text-lg">{name}</h4>
-                              {brand && <p className="text-sm text-gray-600">Marca: {brand}</p>}
-                              {sku && <p className="text-xs text-gray-500">SKU: {sku}</p>}
+                              <h4 className="font-semibold text-gray-800 dark:text-gray-100 text-lg">{name}</h4>
+                              {brand && <p className="text-sm text-gray-600 dark:text-gray-300">Marca: {brand}</p>}
+                              {sku && <p className="text-xs text-gray-500 dark:text-gray-400">SKU: {sku}</p>}
                             </div>
                             <div className="text-right">
                               <p className="text-lg font-bold text-primary">${(price * quantity).toFixed(2)}</p>
-                              <p className="text-sm text-gray-600">{quantity} x ${price.toFixed(2)}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-300">{quantity} x ${price.toFixed(2)}</p>
                             </div>
                           </div>
 
                           {/* Description */}
                           {description && (
                             <div className="mb-2">
-                              <p className="text-sm text-gray-700 line-clamp-2"
+                              <p className="text-sm text-gray-700 dark:text-gray-200 line-clamp-2"
                                  dangerouslySetInnerHTML={{
                                    __html: description.replace(/<br\s*\/?>/gi, ' ')
                                  }}
@@ -510,7 +511,7 @@ export default function LogisticsOrdersPage() {
                               </span>
                             )}
                             {weight > 0 && (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded">
                                 Peso: {weight} kg
                               </span>
                             )}
@@ -536,21 +537,21 @@ export default function LogisticsOrdersPage() {
               </div>
 
               {/* Summary */}
-              <div className="mt-4 bg-gray-50 rounded-lg p-4">
+              <div className="mt-4 bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
                 <div className="flex justify-between items-center text-sm mb-2">
-                  <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium text-gray-800">
+                  <span className="text-gray-600 dark:text-gray-300">Subtotal:</span>
+                  <span className="font-medium text-gray-800 dark:text-gray-100">
                     ${((detailOrder.total_amount || 0) / 1.16).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm mb-2">
-                  <span className="text-gray-600">IVA (16%):</span>
-                  <span className="font-medium text-gray-800">
+                  <span className="text-gray-600 dark:text-gray-300">IVA (16%):</span>
+                  <span className="font-medium text-gray-800 dark:text-gray-100">
                     ${((detailOrder.total_amount || 0) - ((detailOrder.total_amount || 0) / 1.16)).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center border-t pt-2">
-                  <span className="font-semibold text-gray-800">Total:</span>
+                  <span className="font-semibold text-gray-800 dark:text-gray-100">Total:</span>
                   <span className="text-xl font-bold text-primary">
                     ${(detailOrder.total_amount || 0).toFixed(2)} {(typeof detailOrder.metadata?.currency === 'string' ? detailOrder.metadata.currency : '') || "MXN"}
                   </span>
@@ -559,41 +560,41 @@ export default function LogisticsOrdersPage() {
 
               {(!detailOrder.products && !detailOrder.items && !detailOrder.order_items) ||
                ((detailOrder.products?.length || 0) + (detailOrder.items?.length || 0) + (detailOrder.order_items?.length || 0) === 0) ? (
-                <p className="text-center text-gray-500 py-8">No hay productos detallados en esta orden</p>
+                <p className="text-center text-gray-500 dark:text-gray-400 py-8">No hay productos detallados en esta orden</p>
               ) : null}
             </div>
 
             {/* Order Details */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2 flex items-center gap-2">
                 <Info size={18} />
                 Información de la Orden
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-gray-600">Estado:</span>
+                  <span className="text-gray-600 dark:text-gray-300">Estado:</span>
                   <span className="ml-2">
                     <StatusBadge status={detailOrder.status} />
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600">Fecha de creación:</span>
-                  <span className="ml-2 font-medium text-gray-800">
+                  <span className="text-gray-600 dark:text-gray-300">Fecha de creación:</span>
+                  <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
                     {new Date(detailOrder.created_at).toLocaleString("es-ES")}
                   </span>
                 </div>
                 {detailOrder.delivery_date && (
                   <div>
-                    <span className="text-gray-600">Fecha de entrega:</span>
-                    <span className="ml-2 font-medium text-gray-800">
+                    <span className="text-gray-600 dark:text-gray-300">Fecha de entrega:</span>
+                    <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
                       {new Date(detailOrder.delivery_date).toLocaleDateString("es-ES")}
                     </span>
                   </div>
                 )}
                 {detailOrder.notes && (
                   <div className="col-span-2">
-                    <span className="text-gray-600">Notas:</span>
-                    <span className="ml-2 font-medium text-gray-800">
+                    <span className="text-gray-600 dark:text-gray-300">Notas:</span>
+                    <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
                       {detailOrder.notes}
                     </span>
                   </div>
@@ -608,7 +609,7 @@ export default function LogisticsOrdersPage() {
                   setShowDetailsModal(false);
                   setDetailOrder(null);
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Cerrar
               </button>
@@ -637,35 +638,35 @@ function OrderCard({ order, onAssign, onViewDetails }: { order: Order; onAssign:
   const itemCount = order.items?.length || order.order_items?.length || order.products?.length || 0;
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-3">
         <div>
-          <p className="font-bold text-gray-800 text-lg">{orderId}</p>
+          <p className="font-bold text-gray-800 dark:text-gray-100 text-lg">{orderId}</p>
           <StatusBadge status={order.status} />
         </div>
-        <span className="text-lg font-bold text-gray-800">${order.total_amount.toFixed(2)}</span>
+        <span className="text-lg font-bold text-gray-800 dark:text-gray-100">${order.total_amount.toFixed(2)}</span>
       </div>
 
       <div className="space-y-2 mb-4 text-sm">
-        <div className="flex items-center gap-2 text-gray-700">
-          <User size={14} className="text-gray-500" />
+        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+          <User size={14} className="text-gray-500 dark:text-gray-400" />
           <span>{customerName}</span>
         </div>
-        <div className="flex items-center gap-2 text-gray-700">
-          <Phone size={14} className="text-gray-500" />
+        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+          <Phone size={14} className="text-gray-500 dark:text-gray-400" />
           <span>{order.customer_phone}</span>
         </div>
-        <div className="flex items-center gap-2 text-gray-700">
-          <Package size={14} className="text-gray-500" />
+        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+          <Package size={14} className="text-gray-500 dark:text-gray-400" />
           <span>{itemCount} productos</span>
         </div>
-        <div className="flex items-center gap-2 text-gray-700">
-          <Calendar size={14} className="text-gray-500" />
+        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+          <Calendar size={14} className="text-gray-500 dark:text-gray-400" />
           <span>{new Date(order.created_at).toLocaleDateString()}</span>
         </div>
         {order.delivery_address && (
-          <div className="flex items-center gap-2 text-gray-700">
-            <MapPin size={14} className="text-gray-500" />
+          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+            <MapPin size={14} className="text-gray-500 dark:text-gray-400" />
             <span className="text-xs">{order.delivery_address}</span>
           </div>
         )}
@@ -674,7 +675,7 @@ function OrderCard({ order, onAssign, onViewDetails }: { order: Order; onAssign:
       <div className="flex gap-2">
         <button
           onClick={onViewDetails}
-          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+          className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 py-2 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
         >
           <Eye size={16} />
           Ver Detalle

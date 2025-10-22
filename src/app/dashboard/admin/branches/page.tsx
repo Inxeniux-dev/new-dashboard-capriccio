@@ -127,7 +127,7 @@ export default function BranchesManagementPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando sucursales...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Cargando sucursales...</p>
         </div>
       </div>
     );
@@ -138,8 +138,8 @@ export default function BranchesManagementPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Gestión de Sucursales</h1>
-          <p className="text-gray-600">Administra las sucursales del sistema</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Gestión de Sucursales</h1>
+          <p className="text-gray-600 dark:text-gray-300">Administra las sucursales del sistema</p>
         </div>
         <button
           onClick={() => handleOpenModal()}
@@ -162,10 +162,10 @@ export default function BranchesManagementPage() {
             />
           ))
         ) : (
-          <div className="col-span-full text-center py-12 bg-white rounded-xl shadow-md">
-            <MapPin className="text-gray-300 mx-auto mb-4" size={64} />
-            <p className="text-gray-500 text-lg font-medium">No hay sucursales registradas</p>
-            <p className="text-gray-400 text-sm mt-1">Crea la primera sucursal para comenzar</p>
+          <div className="col-span-full text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-md">
+            <MapPin className="text-gray-300 dark:text-gray-600 mx-auto mb-4" size={64} />
+            <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">No hay sucursales registradas</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Crea la primera sucursal para comenzar</p>
           </div>
         )}
       </div>
@@ -173,73 +173,73 @@ export default function BranchesManagementPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full p-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
               {editingBranch ? "Editar Sucursal" : "Nueva Sucursal"}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Nombre *
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Dirección *
                 </label>
                 <input
                   type="text"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     Ciudad
                   </label>
                   <input
                     type="text"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     Estado
                   </label>
                   <input
                     type="text"
                     value={formData.state}
                     onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Teléfono *
                 </label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   required
                 />
               </div>
@@ -248,7 +248,7 @@ export default function BranchesManagementPage() {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   disabled={saving}
                 >
                   Cancelar
@@ -279,23 +279,23 @@ function BranchCard({
   onDelete: () => void;
 }) {
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-lg font-bold text-gray-800">{branch.name}</h3>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{branch.name}</h3>
           <StatusBadge active={branch.active} />
         </div>
         <div className="flex gap-2">
           <button
             onClick={onEdit}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             title="Editar"
           >
-            <Edit2 size={18} className="text-gray-600" />
+            <Edit2 size={18} className="text-gray-600 dark:text-gray-300" />
           </button>
           <button
             onClick={onDelete}
-            className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
             title="Eliminar"
           >
             <Trash2 size={18} className="text-red-600" />
@@ -304,13 +304,13 @@ function BranchCard({
       </div>
 
       <div className="space-y-2 text-sm">
-        <div className="flex items-start gap-2 text-gray-700">
-          <MapPin size={16} className="text-gray-500 mt-0.5" />
+        <div className="flex items-start gap-2 text-gray-700 dark:text-gray-200">
+          <MapPin size={16} className="text-gray-500 dark:text-gray-400 mt-0.5" />
           <span>{branch.address}</span>
         </div>
 
         {(branch.city || branch.state) && (
-          <div className="flex items-center gap-2 text-gray-700 ml-6">
+          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200 ml-6">
             <span>
               {branch.city}
               {branch.city && branch.state && ", "}
@@ -319,14 +319,14 @@ function BranchCard({
           </div>
         )}
 
-        <div className="flex items-center gap-2 text-gray-700">
-          <Phone size={16} className="text-gray-500" />
+        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+          <Phone size={16} className="text-gray-500 dark:text-gray-400" />
           <span>{branch.phone}</span>
         </div>
 
         {branch.manager_name && (
-          <div className="flex items-center gap-2 text-gray-700">
-            <User size={16} className="text-gray-500" />
+          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+            <User size={16} className="text-gray-500 dark:text-gray-400" />
             <span>Manager: {branch.manager_name}</span>
           </div>
         )}

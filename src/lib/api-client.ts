@@ -80,6 +80,24 @@ async function fetchApi<T>(
 
     if (!response.ok) {
       const error = data as ErrorResponse;
+
+      // Manejar errores de autenticación (401)
+      if (response.status === 401 && typeof window !== "undefined") {
+        // Token inválido o expirado - cerrar sesión automáticamente
+        console.warn("Token inválido o expirado. Cerrando sesión...");
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user");
+
+        // Redirigir al login solo si no estamos ya en la página de login
+        if (!window.location.pathname.includes("/login") && window.location.pathname !== "/") {
+          window.location.href = "/";
+        }
+
+        // No lanzar el error después de manejar la redirección
+        // Retornar una promesa rechazada silenciosa que se puede ignorar
+        return Promise.reject(new ApiError(401, "Sesión expirada - redirigiendo", "auth_redirect")) as Promise<T>;
+      }
+
       throw new ApiError(
         response.status,
         error.message || "Error en la petición",
@@ -634,6 +652,7 @@ export const iposApi = {
 // ============================================
 
 export const notificationsApi = {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getAll(_params?: {
     read?: boolean;
     limit?: number;
@@ -646,6 +665,7 @@ export const notificationsApi = {
     });
   },
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async markAsRead(_notificationId: string): Promise<ApiResponse> {
     // TODO: Implementar cuando el endpoint esté disponible
     return Promise.resolve({ success: true });

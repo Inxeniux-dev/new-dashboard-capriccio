@@ -4,10 +4,9 @@ import { useState, useEffect } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
 import {
   Bot, Brain, Settings, MessageSquare, Sparkles, Shield,
-  Save, AlertCircle, CheckCircle, Copy, Eye, EyeOff,
-  RefreshCw, Zap, Globe, Clock, ToggleLeft, ToggleRight
+  Save, AlertCircle, Copy, Eye, EyeOff,
+  RefreshCw, Zap, Clock, ToggleLeft, ToggleRight
 } from "lucide-react";
-import apiClient from "@/lib/api-client";
 
 interface AIConfig {
   id: string;
@@ -92,7 +91,6 @@ export default function AIConfigPage() {
   const { loading } = useRequireAuth(["admin"]);
   const [config, setConfig] = useState<AIConfig>(defaultConfig);
   const [saving, setSaving] = useState(false);
-  const [testMode, setTestMode] = useState(false);
   const [testMessage, setTestMessage] = useState("");
   const [testResponse, setTestResponse] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
@@ -177,7 +175,7 @@ export default function AIConfigPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando configuración...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Cargando configuración...</p>
         </div>
       </div>
     );
@@ -188,11 +186,11 @@ export default function AIConfigPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
             <Bot className="text-primary" size={32} />
             Configuración de IA
           </h1>
-          <p className="text-gray-600">Gestiona el asistente virtual y respuestas automáticas</p>
+          <p className="text-gray-600 dark:text-gray-300">Gestiona el asistente virtual y respuestas automáticas</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -219,8 +217,8 @@ export default function AIConfigPage() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-md">
-        <div className="border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md">
+        <div className="border-b border-gray-200 dark:border-gray-700">
           <div className="flex gap-1 p-1">
             {[
               { id: "general", label: "General", icon: Settings },
@@ -235,7 +233,7 @@ export default function AIConfigPage() {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                   activeTab === tab.id
                     ? "bg-primary text-white"
-                    : "text-gray-600 hover:bg-gray-100"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
                 <tab.icon size={16} />
@@ -251,25 +249,25 @@ export default function AIConfigPage() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     Nombre del Asistente
                   </label>
                   <input
                     type="text"
                     value={config.name}
                     onChange={(e) => setConfig({ ...config, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     Modelo de IA
                   </label>
                   <select
                     value={config.model}
                     onChange={(e) => setConfig({ ...config, model: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   >
                     {models.map((model) => (
                       <option key={model.value} value={model.value}>
@@ -280,7 +278,7 @@ export default function AIConfigPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     Temperatura (Creatividad)
                   </label>
                   <div className="flex items-center gap-3">
@@ -293,21 +291,21 @@ export default function AIConfigPage() {
                       onChange={(e) => setConfig({ ...config, temperature: parseFloat(e.target.value) })}
                       className="flex-1"
                     />
-                    <span className="text-sm font-medium text-gray-700 w-10">{config.temperature}</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 w-10">{config.temperature}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Menor = más conservador, Mayor = más creativo
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     Idioma Principal
                   </label>
                   <select
                     value={config.language}
                     onChange={(e) => setConfig({ ...config, language: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   >
                     {languages.map((lang) => (
                       <option key={lang.value} value={lang.value}>
@@ -318,7 +316,7 @@ export default function AIConfigPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     Tokens Máximos
                   </label>
                   <input
@@ -327,12 +325,12 @@ export default function AIConfigPage() {
                     onChange={(e) => setConfig({ ...config, max_tokens: parseInt(e.target.value) })}
                     min="50"
                     max="2000"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     Retraso de Respuesta (ms)
                   </label>
                   <input
@@ -342,16 +340,16 @@ export default function AIConfigPage() {
                     min="0"
                     max="5000"
                     step="100"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Simula tiempo de escritura humana
                   </p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   API Key de OpenAI
                 </label>
                 <div className="flex gap-2">
@@ -360,23 +358,23 @@ export default function AIConfigPage() {
                       type={showApiKey ? "text" : "password"}
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
-                      className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                      className="w-full px-4 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                     />
                     <button
                       onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                     >
                       {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-                  <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                  <button className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <Copy size={18} />
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Plataformas Habilitadas
                 </label>
                 <div className="flex flex-wrap gap-3">
@@ -394,7 +392,7 @@ export default function AIConfigPage() {
                         }}
                         className="rounded text-primary focus:ring-primary"
                       />
-                      <span className="text-sm text-gray-700 capitalize">{platform}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 capitalize">{platform}</span>
                     </label>
                   ))}
                 </div>
@@ -406,46 +404,46 @@ export default function AIConfigPage() {
           {activeTab === "prompt" && (
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   System Prompt (Instrucciones para la IA)
                 </label>
                 <textarea
                   value={config.system_prompt}
                   onChange={(e) => setConfig({ ...config, system_prompt: e.target.value })}
                   rows={6}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   placeholder="Define el comportamiento y personalidad del asistente..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Mensaje de Bienvenida
                 </label>
                 <textarea
                   value={config.welcome_message}
                   onChange={(e) => setConfig({ ...config, welcome_message: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   placeholder="Mensaje que se envía al iniciar una conversación..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Mensaje de Error/Fallback
                 </label>
                 <textarea
                   value={config.fallback_message}
                   onChange={(e) => setConfig({ ...config, fallback_message: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   placeholder="Mensaje cuando no se entiende la consulta..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Mensaje Fuera de Horario
                 </label>
                 <textarea
@@ -455,7 +453,7 @@ export default function AIConfigPage() {
                     business_hours: { ...config.business_hours, offline_message: e.target.value }
                   })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   placeholder="Mensaje cuando se contacta fuera del horario de atención..."
                 />
               </div>
@@ -466,10 +464,10 @@ export default function AIConfigPage() {
           {activeTab === "features" && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Funciones Automáticas</h3>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Funciones Automáticas</h3>
                 <div className="space-y-3">
                   {Object.entries(config.features).map(([key, value]) => (
-                    <label key={key} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <label key={key} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                       <div className="flex items-center gap-3">
                         <input
                           type="checkbox"
@@ -481,7 +479,7 @@ export default function AIConfigPage() {
                           className="rounded text-primary focus:ring-primary"
                         />
                         <div>
-                          <p className="font-medium text-gray-800">
+                          <p className="font-medium text-gray-800 dark:text-gray-100">
                             {key === "auto_reply" && "Respuestas Automáticas"}
                             {key === "order_tracking" && "Seguimiento de Pedidos"}
                             {key === "product_info" && "Información de Productos"}
@@ -489,7 +487,7 @@ export default function AIConfigPage() {
                             {key === "appointment_booking" && "Reserva de Citas"}
                             {key === "faq_responses" && "Respuestas a Preguntas Frecuentes"}
                           </p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
                             {key === "auto_reply" && "Responde automáticamente a mensajes entrantes"}
                             {key === "order_tracking" && "Permite consultar el estado de los pedidos"}
                             {key === "product_info" && "Proporciona información sobre productos"}
@@ -500,7 +498,7 @@ export default function AIConfigPage() {
                         </div>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        value ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                        value ? "bg-green-100 text-green-800" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
                       }`}>
                         {value ? "Activo" : "Inactivo"}
                       </span>
@@ -510,7 +508,7 @@ export default function AIConfigPage() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Base de Conocimiento</h3>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Base de Conocimiento</h3>
                 <div className="space-y-3">
                   {Object.entries(config.knowledge_base).filter(([key]) => key !== "custom_docs").map(([key, value]) => (
                     <label key={key} className="flex items-center gap-3">
@@ -523,7 +521,7 @@ export default function AIConfigPage() {
                         })}
                         className="rounded text-primary focus:ring-primary"
                       />
-                      <span className="text-gray-700">
+                      <span className="text-gray-700 dark:text-gray-200">
                         {key === "products" && "Catálogo de Productos"}
                         {key === "services" && "Servicios Disponibles"}
                         {key === "policies" && "Políticas y Términos"}
@@ -539,7 +537,7 @@ export default function AIConfigPage() {
           {activeTab === "schedule" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800">Horario de Atención</h3>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Horario de Atención</h3>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -550,7 +548,7 @@ export default function AIConfigPage() {
                     })}
                     className="rounded text-primary focus:ring-primary"
                   />
-                  <span className="text-gray-700">Habilitar horario de atención</span>
+                  <span className="text-gray-700 dark:text-gray-200">Habilitar horario de atención</span>
                 </label>
               </div>
 
@@ -558,7 +556,7 @@ export default function AIConfigPage() {
                 {daysOfWeek.map((day) => {
                   const schedule = config.business_hours.schedule[day.key];
                   return (
-                    <div key={day.key} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
+                    <div key={day.key} className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                       <input
                         type="checkbox"
                         checked={schedule.enabled}
@@ -574,7 +572,7 @@ export default function AIConfigPage() {
                         })}
                         className="rounded text-primary focus:ring-primary"
                       />
-                      <span className="w-24 font-medium text-gray-700">{day.label}</span>
+                      <span className="w-24 font-medium text-gray-700 dark:text-gray-200">{day.label}</span>
                       <input
                         type="time"
                         value={schedule.start}
@@ -589,9 +587,9 @@ export default function AIConfigPage() {
                           }
                         })}
                         disabled={!schedule.enabled}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none disabled:bg-gray-100"
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none disabled:bg-gray-100 dark:disabled:bg-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                       />
-                      <span className="text-gray-500">a</span>
+                      <span className="text-gray-500 dark:text-gray-400">a</span>
                       <input
                         type="time"
                         value={schedule.end}
@@ -606,7 +604,7 @@ export default function AIConfigPage() {
                           }
                         })}
                         disabled={!schedule.enabled}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none disabled:bg-gray-100"
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none disabled:bg-gray-100 dark:disabled:bg-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                       />
                     </div>
                   );
@@ -618,10 +616,10 @@ export default function AIConfigPage() {
           {/* Test Tab */}
           {activeTab === "test" && (
             <div className="space-y-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="text-blue-600 flex-shrink-0" size={20} />
-                  <div className="text-sm text-blue-800">
+                  <AlertCircle className="text-blue-600 dark:text-blue-400 flex-shrink-0" size={20} />
+                  <div className="text-sm text-blue-800 dark:text-blue-300">
                     <p className="font-medium mb-1">Modo de Prueba</p>
                     <p>Aquí puedes probar las respuestas del asistente con la configuración actual. Los cambios no se guardan automáticamente.</p>
                   </div>
@@ -630,14 +628,14 @@ export default function AIConfigPage() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     Mensaje de Prueba
                   </label>
                   <textarea
                     value={testMessage}
                     onChange={(e) => setTestMessage(e.target.value)}
                     rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                     placeholder="Escribe un mensaje para probar..."
                   />
                   <button
@@ -651,18 +649,18 @@ export default function AIConfigPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     Respuesta del Asistente
                   </label>
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 min-h-[120px]">
+                  <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 min-h-[120px]">
                     {testResponse ? (
                       <div className="space-y-2">
                         <div className="flex items-start gap-2">
                           <Bot className="text-primary flex-shrink-0" size={20} />
-                          <p className="text-gray-800">{testResponse}</p>
+                          <p className="text-gray-800 dark:text-gray-100">{testResponse}</p>
                         </div>
                         {testResponse !== "Procesando..." && (
-                          <div className="flex items-center gap-4 text-xs text-gray-500 mt-3">
+                          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-3">
                             <span>Modelo: {config.model}</span>
                             <span>Temperatura: {config.temperature}</span>
                             <span>Tokens: ~{testResponse.split(" ").length * 2}</span>
@@ -670,22 +668,22 @@ export default function AIConfigPage() {
                         )}
                       </div>
                     ) : (
-                      <p className="text-gray-500 text-center">La respuesta aparecerá aquí...</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-center">La respuesta aparecerá aquí...</p>
                     )}
                   </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200">
                   <RefreshCw size={18} />
                   Reiniciar Conversación
                 </button>
-                <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200">
                   <Brain size={18} />
                   Entrenar Modelo
                 </button>
-                <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200">
                   <Shield size={18} />
                   Validar Configuración
                 </button>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
-import { Truck, Package, Building2, Calendar, Clock, CheckCircle, XCircle, AlertCircle, ArrowRight } from "lucide-react";
+import { Truck, Package, Building2, Clock, CheckCircle, XCircle, AlertCircle, ArrowRight } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import type { Order, Branch, OrderStatus } from "@/types/api";
 
@@ -172,7 +172,7 @@ export default function LogisticsAssignmentsPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando asignaciones...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Cargando asignaciones...</p>
         </div>
       </div>
     );
@@ -183,8 +183,8 @@ export default function LogisticsAssignmentsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Gestión de Asignaciones</h1>
-          <p className="text-gray-600">Arrastra y suelta órdenes para asignarlas a sucursales</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Gestión de Asignaciones</h1>
+          <p className="text-gray-600 dark:text-gray-300">Arrastra y suelta órdenes para asignarlas a sucursales</p>
         </div>
       </div>
 
@@ -222,8 +222,8 @@ export default function LogisticsAssignmentsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Unassigned Orders */}
-        <div className="lg:col-span-1 bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
             <AlertCircle className="text-red-500" size={20} />
             Órdenes Sin Asignar
             <span className="bg-red-100 text-red-800 text-xs font-bold rounded-full px-2 py-1">
@@ -238,23 +238,23 @@ export default function LogisticsAssignmentsPage() {
                   key={order.id}
                   draggable
                   onDragStart={(e) => handleDragStart(e, order)}
-                  className="border border-gray-200 rounded-lg p-3 cursor-move hover:shadow-md transition-all hover:scale-105 bg-red-50"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-move hover:shadow-md transition-all hover:scale-105 bg-red-50 dark:bg-red-900/20"
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <p className="font-semibold text-sm text-gray-800">
+                    <p className="font-semibold text-sm text-gray-800 dark:text-gray-100">
                       {order.order_number || order.message_id || `#${order.id}`}
                     </p>
-                    <span className="text-sm font-bold text-gray-800">
+                    <span className="text-sm font-bold text-gray-800 dark:text-gray-100">
                       ${order.total_amount.toFixed(0)}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600 mb-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-300 mb-1">
                     {order.customer_name || (typeof order.metadata?.customer_name === 'string' ? order.metadata.customer_name : '') || "Cliente"}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {order.items?.length || order.order_items?.length || order.products?.length || 0} productos
                   </p>
-                  <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
+                  <div className="flex items-center gap-1 mt-2 text-xs text-gray-500 dark:text-gray-400">
                     <Clock size={12} />
                     {new Date(order.created_at).toLocaleDateString()}
                   </div>
@@ -262,8 +262,8 @@ export default function LogisticsAssignmentsPage() {
               ))
             ) : (
               <div className="text-center py-12">
-                <Package className="text-gray-300 mx-auto mb-4" size={48} />
-                <p className="text-gray-500 text-sm">No hay órdenes sin asignar</p>
+                <Package className="text-gray-300 dark:text-gray-600 mx-auto mb-4" size={48} />
+                <p className="text-gray-500 dark:text-gray-400 text-sm">No hay órdenes sin asignar</p>
               </div>
             )}
           </div>
@@ -271,7 +271,7 @@ export default function LogisticsAssignmentsPage() {
 
         {/* Branch Assignments */}
         <div className="lg:col-span-3">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Asignaciones por Sucursal</h2>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Asignaciones por Sucursal</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {assignments.map((assignment) => (
@@ -280,14 +280,14 @@ export default function LogisticsAssignmentsPage() {
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, assignment.branch.id)}
                 className={`
-                  bg-white rounded-xl shadow-md p-4 border-2 transition-all
+                  bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-2 transition-all
                   ${draggedOrder ? "border-dashed border-primary" : "border-transparent"}
                 `}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Building2 className="text-primary" size={20} />
-                    <h3 className="font-bold text-gray-800">{assignment.branch.name}</h3>
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100">{assignment.branch.name}</h3>
                   </div>
                   <span className="bg-primary/10 text-primary text-xs font-bold rounded-full px-2 py-1">
                     {assignment.orders.length}
@@ -295,13 +295,13 @@ export default function LogisticsAssignmentsPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-                  <div className="bg-gray-50 rounded p-2">
-                    <p className="text-gray-500 text-xs">Total</p>
-                    <p className="font-bold text-gray-800">${assignment.totalAmount.toFixed(0)}</p>
+                  <div className="bg-gray-50 dark:bg-gray-900 rounded p-2">
+                    <p className="text-gray-500 dark:text-gray-400 text-xs">Total</p>
+                    <p className="font-bold text-gray-800 dark:text-gray-100">${assignment.totalAmount.toFixed(0)}</p>
                   </div>
-                  <div className="bg-gray-50 rounded p-2">
-                    <p className="text-gray-500 text-xs">Productos</p>
-                    <p className="font-bold text-gray-800">{assignment.totalItems}</p>
+                  <div className="bg-gray-50 dark:bg-gray-900 rounded p-2">
+                    <p className="text-gray-500 dark:text-gray-400 text-xs">Productos</p>
+                    <p className="font-bold text-gray-800 dark:text-gray-100">{assignment.totalItems}</p>
                   </div>
                 </div>
 
@@ -310,19 +310,19 @@ export default function LogisticsAssignmentsPage() {
                     assignment.orders.map((order) => (
                       <div
                         key={order.id}
-                        className="border border-gray-200 rounded-lg p-2 hover:shadow-sm transition-shadow"
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-2 hover:shadow-sm transition-shadow"
                       >
                         <div className="flex justify-between items-start mb-1">
-                          <p className="font-semibold text-xs text-gray-800">
+                          <p className="font-semibold text-xs text-gray-800 dark:text-gray-100">
                             {order.order_number || `#${order.id}`}
                           </p>
                           <StatusBadge status={order.status} size="xs" />
                         </div>
-                        <p className="text-xs text-gray-600">
+                        <p className="text-xs text-gray-600 dark:text-gray-300">
                           {order.customer_name || (typeof order.metadata?.customer_name === 'string' ? order.metadata.customer_name : '') || "Cliente"}
                         </p>
                         <div className="flex items-center justify-between mt-2">
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             ${order.total_amount.toFixed(0)}
                           </span>
                           <div className="flex gap-1">
@@ -356,9 +356,9 @@ export default function LogisticsAssignmentsPage() {
                       </div>
                     ))
                   ) : (
-                    <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
-                      <Package className="text-gray-300 mx-auto mb-2" size={32} />
-                      <p className="text-xs text-gray-500">
+                    <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
+                      <Package className="text-gray-300 dark:text-gray-600 mx-auto mb-2" size={32} />
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         Arrastra órdenes aquí para asignarlas
                       </p>
                     </div>
@@ -373,33 +373,33 @@ export default function LogisticsAssignmentsPage() {
       {/* Assign Modal */}
       {showAssignModal && selectedOrder && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Confirmar Asignación</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Confirmar Asignación</h2>
 
             <div className="space-y-4 mb-6">
               <div>
-                <p className="text-sm text-gray-600">Orden</p>
-                <p className="font-bold text-gray-800">
+                <p className="text-sm text-gray-600 dark:text-gray-300">Orden</p>
+                <p className="font-bold text-gray-800 dark:text-gray-100">
                   {selectedOrder.order_number || selectedOrder.message_id || `#${selectedOrder.id}`}
                 </p>
               </div>
 
               <div>
-                <p className="text-sm text-gray-600">Sucursal</p>
-                <p className="font-semibold text-gray-800">
+                <p className="text-sm text-gray-600 dark:text-gray-300">Sucursal</p>
+                <p className="font-semibold text-gray-800 dark:text-gray-100">
                   {assignments.find(a => a.branch.id === selectedBranch)?.branch.name}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Fecha de Entrega
                 </label>
                 <input
                   type="date"
                   value={deliveryDate}
                   onChange={(e) => setDeliveryDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                   required
                 />
               </div>
@@ -412,7 +412,7 @@ export default function LogisticsAssignmentsPage() {
                   setSelectedOrder(null);
                   setSelectedBranch("");
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                 disabled={assigning}
               >
                 Cancelar
@@ -439,11 +439,11 @@ function StatCard({ icon: Icon, title, value, color }: {
   color: string;
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600 font-medium">{title}</p>
-          <p className="text-2xl font-bold text-gray-800">{value}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">{title}</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
         </div>
         <div className={`${color} p-3 rounded-lg`}>
           <Icon className="text-white" size={24} />

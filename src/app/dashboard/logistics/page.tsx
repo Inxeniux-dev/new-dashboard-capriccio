@@ -79,7 +79,7 @@ export default function LogisticsDashboardPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando dashboard...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Cargando dashboard...</p>
         </div>
       </div>
     );
@@ -90,8 +90,8 @@ export default function LogisticsDashboardPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard Logística</h1>
-          <p className="text-gray-600">Bienvenido, {user?.full_name}</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Dashboard Logística</h1>
+          <p className="text-gray-600 dark:text-gray-300">Bienvenido, {user?.full_name}</p>
         </div>
       </div>
 
@@ -128,9 +128,9 @@ export default function LogisticsDashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Órdenes Sin Asignar */}
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
               <AlertCircle className="text-red-500" size={24} />
               Órdenes Sin Asignar
             </h2>
@@ -147,21 +147,21 @@ export default function LogisticsDashboardPage() {
               unassignedOrders.slice(0, 5).map((order) => (
                 <div
                   key={order.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-gray-700"
                   onClick={() => handleAssignOrder(order.id)}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <p className="font-semibold text-gray-800">
+                      <p className="font-semibold text-gray-800 dark:text-gray-100">
                         {order.customer_name || (typeof order.metadata?.customer_name === 'string' ? order.metadata.customer_name : '') || "Cliente"}
                       </p>
-                      <p className="text-sm text-gray-600">{order.customer_phone}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{order.customer_phone}</p>
                     </div>
-                    <span className="text-sm font-bold text-gray-800">
+                    <span className="text-sm font-bold text-gray-800 dark:text-gray-100">
                       ${order.total_amount.toFixed(2)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                     <span className="flex items-center gap-1">
                       <Calendar size={14} />
                       {new Date(order.created_at).toLocaleDateString()}
@@ -177,15 +177,15 @@ export default function LogisticsDashboardPage() {
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-center py-8">No hay órdenes sin asignar</p>
+              <p className="text-gray-500 dark:text-gray-400 text-center py-8">No hay órdenes sin asignar</p>
             )}
           </div>
         </div>
 
         {/* Conversaciones Recientes */}
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
               <MessageSquare className="text-purple-500" size={24} />
               Conversaciones Recientes
             </h2>
@@ -202,7 +202,7 @@ export default function LogisticsDashboardPage() {
               recentConversations.map((conversation) => (
                 <div
                   key={conversation.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-gray-700"
                   onClick={() => router.push(`/dashboard/logistics/conversations/${conversation.platform}/${conversation.contact_id}`)}
                 >
                   <div className="flex items-start gap-3">
@@ -211,7 +211,7 @@ export default function LogisticsDashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start mb-1">
-                        <p className="font-semibold text-gray-800 truncate">
+                        <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">
                           {conversation.contact_name}
                         </p>
                         {conversation.unread_count > 0 && (
@@ -220,10 +220,10 @@ export default function LogisticsDashboardPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 truncate">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
                         {conversation.last_message}
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         {new Date(conversation.last_message_time).toLocaleString()}
                       </p>
                     </div>
@@ -231,7 +231,7 @@ export default function LogisticsDashboardPage() {
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-center py-8">No hay conversaciones recientes</p>
+              <p className="text-gray-500 dark:text-gray-400 text-center py-8">No hay conversaciones recientes</p>
             )}
           </div>
         </div>
@@ -249,13 +249,13 @@ function StatCard({ icon: Icon, title, value, color, onClick }: {
 }) {
   return (
     <div
-      className={`bg-white rounded-xl shadow-md p-6 ${onClick ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
+      className={`bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 ${onClick ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
       onClick={onClick}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-600 text-sm font-medium">{title}</p>
-          <p className="text-3xl font-bold text-gray-800 mt-2">{value}</p>
+          <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">{title}</p>
+          <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{value}</p>
         </div>
         <div className={`${color} p-4 rounded-lg`}>
           <Icon className="text-white" size={24} />

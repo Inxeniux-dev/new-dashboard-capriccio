@@ -74,7 +74,7 @@ export default function AdminDashboardPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando dashboard...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Cargando dashboard...</p>
         </div>
       </div>
     );
@@ -85,8 +85,8 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard Administrador</h1>
-          <p className="text-gray-600">Bienvenido, {user?.full_name}</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Dashboard Administrador</h1>
+          <p className="text-gray-600 dark:text-gray-300">Bienvenido, {user?.full_name}</p>
         </div>
       </div>
 
@@ -126,42 +126,42 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
           onClick={() => router.push("/dashboard/admin/users")}
-          className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+          className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center gap-3">
             <Users className="text-primary" size={24} />
-            <span className="font-semibold text-gray-800">Gestionar Usuarios</span>
+            <span className="font-semibold text-gray-800 dark:text-gray-100">Gestionar Usuarios</span>
           </div>
-          <ArrowRight className="text-gray-400" size={20} />
+          <ArrowRight className="text-gray-400 dark:text-gray-500" size={20} />
         </button>
 
         <button
           onClick={() => router.push("/dashboard/admin/branches")}
-          className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+          className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center gap-3">
             <Building2 className="text-primary" size={24} />
-            <span className="font-semibold text-gray-800">Gestionar Sucursales</span>
+            <span className="font-semibold text-gray-800 dark:text-gray-100">Gestionar Sucursales</span>
           </div>
-          <ArrowRight className="text-gray-400" size={20} />
+          <ArrowRight className="text-gray-400 dark:text-gray-500" size={20} />
         </button>
 
         <button
           onClick={() => router.push("/dashboard/logistics/conversations")}
-          className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+          className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center gap-3">
             <MessageSquare className="text-primary" size={24} />
-            <span className="font-semibold text-gray-800">Ver Conversaciones</span>
+            <span className="font-semibold text-gray-800 dark:text-gray-100">Ver Conversaciones</span>
           </div>
-          <ArrowRight className="text-gray-400" size={20} />
+          <ArrowRight className="text-gray-400 dark:text-gray-500" size={20} />
         </button>
       </div>
 
       {/* Sucursales */}
-      <div className="bg-white rounded-xl shadow-md p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <Building2 className="text-primary" size={24} />
             Sucursales
           </h2>
@@ -169,23 +169,23 @@ export default function AdminDashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {branches.map((branch) => (
-            <div key={branch.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <h3 className="font-bold text-gray-800 mb-2">{branch.name}</h3>
+            <div key={branch.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-2">{branch.name}</h3>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Pendientes:</span>
+                  <span className="text-gray-600 dark:text-gray-300">Pendientes:</span>
                   <span className="font-semibold text-orange-600">{branch.pending_orders}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Completadas hoy:</span>
+                  <span className="text-gray-600 dark:text-gray-300">Completadas hoy:</span>
                   <span className="font-semibold text-green-600">{branch.completed_today}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Total órdenes:</span>
+                  <span className="text-gray-600 dark:text-gray-300">Total órdenes:</span>
                   <span className="font-semibold">{branch.total_orders}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Empleados:</span>
+                  <span className="text-gray-600 dark:text-gray-300">Empleados:</span>
                   <span className="font-semibold">{branch.active_employees}</span>
                 </div>
               </div>
@@ -195,43 +195,43 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Órdenes Recientes */}
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
           <TrendingUp className="text-primary" size={24} />
           Órdenes Recientes
         </h2>
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sucursal</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Sucursal</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Fecha</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {recentOrders.length > 0 ? (
                 recentOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">{order.order_number}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{order.customer_name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{order.branch_name || "Sin asignar"}</td>
+                  <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{order.order_number}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{order.customer_name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{order.branch_name || "Sin asignar"}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={order.status} />
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">${order.total_amount.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">${order.total_amount.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                       {new Date(order.created_at).toLocaleDateString()}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                     No hay órdenes disponibles
                   </td>
                 </tr>
@@ -253,13 +253,13 @@ function StatCard({ icon: Icon, title, value, color, onClick }: {
 }) {
   return (
     <div
-      className={`bg-white rounded-xl shadow-md p-6 ${onClick ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
+      className={`bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 ${onClick ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
       onClick={onClick}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-600 text-sm font-medium">{title}</p>
-          <p className="text-3xl font-bold text-gray-800 mt-2">{value}</p>
+          <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">{title}</p>
+          <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{value}</p>
         </div>
         <div className={`${color} p-4 rounded-lg`}>
           <Icon className="text-white" size={24} />

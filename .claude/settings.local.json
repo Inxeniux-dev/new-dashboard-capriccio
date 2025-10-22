@@ -12,7 +12,10 @@
       "Bash(echo:*)",
       "Bash(for file in /Users/dramirez/Development/Inxeniux/Capriccio/new-dashboard-capriccio/src/app/dashboard/logistics/{page,stats/page,calendar/page,assignments/page,conversations/page}.tsx)",
       "Bash(do echo \"=== $file ===\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(git diff:*)",
+      "Bash(ls:*)",
+      "Bash(NODE_ENV=production npm run build:*)"
     ],
     "deny": [],
     "ask": []

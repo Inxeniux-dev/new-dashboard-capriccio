@@ -25,11 +25,11 @@ const MetricCard = ({
   icon: LucideIcon;
   isPositive?: boolean;
 }) => (
-  <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-100">
+  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-100 dark:border-gray-700">
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-        <p className="text-3xl font-bold text-gray-900">{value}</p>
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{title}</p>
+        <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
         <div className="flex items-center mt-2">
           {isPositive ? (
             <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
@@ -81,14 +81,14 @@ const RecentOrder = ({
   };
 
   return (
-    <tr className="hover:bg-gray-50 transition-colors">
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
         {id}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200">
         {customer}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
         {amount}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
@@ -119,10 +119,10 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Bienvenido, Admin
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             Resumen de tu negocio hoy, {new Date().toLocaleDateString('es-ES', {
               weekday: 'long',
               year: 'numeric',
@@ -132,7 +132,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center space-x-4 mt-4 sm:mt-0">
-          <button className="relative p-2 text-gray-600 hover:text-primary transition-colors">
+          <button className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
             <Bell size={20} />
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
               3
@@ -142,7 +142,7 @@ export default function DashboardPage() {
             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
               <User className="w-4 h-4 text-white" />
             </div>
-            <span className="font-medium text-gray-700">Admin</span>
+            <span className="font-medium text-gray-700 dark:text-gray-200">Admin</span>
           </div>
         </div>
       </div>
@@ -182,32 +182,32 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Orders */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-md border border-gray-100">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-900">Pedidos Recientes</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Pedidos Recientes</h3>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       ID
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Cliente
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Monto
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Estado
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Plataforma
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {recentOrders.map((order) => (
                     <RecentOrder key={order.id} {...order} />
                   ))}
@@ -220,57 +220,57 @@ export default function DashboardPage() {
         {/* Social Media Activity */}
         <div className="space-y-6">
           {/* Quick Stats */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Actividad Redes Sociales</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-6">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Actividad Redes Sociales</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
-                    <span className="text-pink-600 font-bold text-sm">IG</span>
+                  <div className="w-8 h-8 bg-pink-100 dark:bg-pink-900 rounded-lg flex items-center justify-center">
+                    <span className="text-pink-600 dark:text-pink-300 font-bold text-sm">IG</span>
                   </div>
-                  <span className="text-gray-700">Instagram</span>
+                  <span className="text-gray-700 dark:text-gray-200">Instagram</span>
                 </div>
-                <span className="text-sm font-medium text-gray-900">12 mensajes</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">12 mensajes</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <span className="text-green-600 font-bold text-sm">WA</span>
+                  <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                    <span className="text-green-600 dark:text-green-300 font-bold text-sm">WA</span>
                   </div>
-                  <span className="text-gray-700">WhatsApp</span>
+                  <span className="text-gray-700 dark:text-gray-200">WhatsApp</span>
                 </div>
-                <span className="text-sm font-medium text-gray-900">8 mensajes</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">8 mensajes</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span className="text-blue-600 font-bold text-sm">FB</span>
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                    <span className="text-blue-600 dark:text-blue-300 font-bold text-sm">FB</span>
                   </div>
-                  <span className="text-gray-700">Messenger</span>
+                  <span className="text-gray-700 dark:text-gray-200">Messenger</span>
                 </div>
-                <span className="text-sm font-medium text-gray-900">3 mensajes</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">3 mensajes</span>
               </div>
             </div>
           </div>
 
           {/* Recent Messages */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Mensajes Recientes</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-6">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Mensajes Recientes</h3>
             <div className="space-y-4">
               <div className="border-l-4 border-pink-400 pl-4">
-                <p className="text-sm text-gray-600">@maria_chocolove</p>
-                <p className="text-gray-900">¿Tienen chocolates sin azúcar?</p>
-                <p className="text-xs text-gray-500 mt-1">Instagram • hace 2 min</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">@maria_chocolove</p>
+                <p className="text-gray-900 dark:text-gray-100">¿Tienen chocolates sin azúcar?</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Instagram • hace 2 min</p>
               </div>
               <div className="border-l-4 border-green-400 pl-4">
-                <p className="text-sm text-gray-600">Carlos López</p>
-                <p className="text-gray-900">Quiero hacer un pedido para el sábado</p>
-                <p className="text-xs text-gray-500 mt-1">WhatsApp • hace 5 min</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Carlos López</p>
+                <p className="text-gray-900 dark:text-gray-100">Quiero hacer un pedido para el sábado</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">WhatsApp • hace 5 min</p>
               </div>
               <div className="border-l-4 border-blue-400 pl-4">
-                <p className="text-sm text-gray-600">Ana Martínez</p>
-                <p className="text-gray-900">¡Los truffles estuvieron increíbles!</p>
-                <p className="text-xs text-gray-500 mt-1">Messenger • hace 10 min</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Ana Martínez</p>
+                <p className="text-gray-900 dark:text-gray-100">¡Los truffles estuvieron increíbles!</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Messenger • hace 10 min</p>
               </div>
             </div>
           </div>

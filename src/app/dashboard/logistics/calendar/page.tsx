@@ -1,15 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
 import { Calendar, Package, MapPin, Clock, ChevronLeft, ChevronRight, Filter, Truck } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import type { Order, Branch } from "@/types/api";
-
-interface DayOrders {
-  date: Date;
-  orders: Order[];
-}
 
 export default function LogisticsCalendarPage() {
   const { loading } = useRequireAuth(["logistics", "logistica", "admin"]);
@@ -20,17 +15,30 @@ export default function LogisticsCalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [loadingData, setLoadingData] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, [currentMonth, selectedBranch]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoadingData(true);
 
-      // Cargar órdenes
-      const ordersResponse = await apiClient.orders.getAll({ limit: 200 }) as { data?: Order[]; orders?: Order[] };
-      const ordersData = ordersResponse.orders || ordersResponse.data || [];
+      // Cargar órdenes y sucursales en paralelo con manejo de errores individual
+      const [ordersResponse, branchesResponse] = await Promise.all([
+        apiClient.orders.getAll({ limit: 200 }).catch((error) => {
+          // Si es error 401, ya se manejó en api-client (redirección a login) - no logear
+          if (error.status !== 401 && error.details !== "auth_redirect") {
+            console.error("Error loading orders:", error);
+          }
+          return { data: [], orders: [] };
+        }),
+        apiClient.branches.getAll().catch((error) => {
+          // Si es error 401, ya se manejó en api-client (redirección a login) - no logear
+          if (error.status !== 401 && error.details !== "auth_redirect") {
+            console.error("Error loading branches:", error);
+          }
+          return { data: [] };
+        }),
+      ]);
+
+      const ordersData = (ordersResponse as { data?: Order[]; orders?: Order[] }).orders ||
+                        (ordersResponse as { data?: Order[]; orders?: Order[] }).data || [];
 
       // Filtrar órdenes con fecha de entrega
       const ordersWithDelivery = ordersData.filter((o: Order) => o.delivery_date);
@@ -41,15 +49,30 @@ export default function LogisticsCalendarPage() {
         : ordersWithDelivery.filter((o: Order) => o.store_id === selectedBranch || o.branch_id === selectedBranch);
 
       setOrders(filteredOrders);
-
-      // Cargar sucursales
-      const branchesResponse = await apiClient.branches.getAll();
       setBranches(branchesResponse.data || []);
     } catch (error) {
-      console.error("Error loading calendar data:", error);
+      // Solo logear errores que no sean de autenticación
+      const err = error as { status?: number; details?: string };
+      if (err.status !== 401 && err.details !== "auth_redirect") {
+        console.error("Error loading calendar data:", error);
+      }
+      // Los errores de autenticación (401) se manejan automáticamente en api-client
     } finally {
       setLoadingData(false);
     }
+  }, [selectedBranch]);
+
+  useEffect(() => {
+    loadData();
+  }, [currentMonth, selectedBranch, loadData]);
+
+  // Función para parsear fechas sin problemas de zona horaria
+  const parseLocalDate = (dateString: string): Date => {
+    // Parsear "YYYY-MM-DD" o "YYYY-MM-DDTHH:mm:ss" como fecha local
+    const [datePart] = dateString.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    // Mes - 1 porque en JavaScript los meses van de 0-11
+    return new Date(year, month - 1, day);
   };
 
   const getDaysInMonth = () => {
@@ -78,7 +101,7 @@ export default function LogisticsCalendarPage() {
   const getOrdersForDate = (date: Date) => {
     return orders.filter(order => {
       if (!order.delivery_date) return false;
-      const deliveryDate = new Date(order.delivery_date);
+      const deliveryDate = parseLocalDate(order.delivery_date);
       return (
         deliveryDate.getDate() === date.getDate() &&
         deliveryDate.getMonth() === date.getMonth() &&
@@ -119,7 +142,7 @@ export default function LogisticsCalendarPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando calendario...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Cargando calendario...</p>
         </div>
       </div>
     );
@@ -130,16 +153,16 @@ export default function LogisticsCalendarPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Calendario de Entregas</h1>
-          <p className="text-gray-600">Vista mensual de entregas programadas</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Calendario de Entregas</h1>
+          <p className="text-gray-600 dark:text-gray-300">Vista mensual de entregas programadas</p>
         </div>
 
         <div className="flex items-center gap-3">
-          <Filter size={18} className="text-gray-500" />
+          <Filter size={18} className="text-gray-500 dark:text-gray-400" />
           <select
             value={selectedBranch}
             onChange={(e) => setSelectedBranch(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
             <option value="all">Todas las sucursales</option>
             {branches.map((branch) => (
@@ -153,23 +176,23 @@ export default function LogisticsCalendarPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-md p-6">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
           {/* Calendar Header */}
           <div className="flex justify-between items-center mb-6">
             <button
               onClick={() => navigateMonth("prev")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-700 dark:text-gray-200"
             >
               <ChevronLeft size={20} />
             </button>
 
-            <h2 className="text-xl font-bold text-gray-800 capitalize">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 capitalize">
               {formatMonthYear(currentMonth)}
             </h2>
 
             <button
               onClick={() => navigateMonth("next")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-700 dark:text-gray-200"
             >
               <ChevronRight size={20} />
             </button>
@@ -178,7 +201,7 @@ export default function LogisticsCalendarPage() {
           {/* Days of Week */}
           <div className="grid grid-cols-7 gap-2 mb-2">
             {dayNames.map(day => (
-              <div key={day} className="text-center text-sm font-semibold text-gray-600 py-2">
+              <div key={day} className="text-center text-sm font-semibold text-gray-600 dark:text-gray-300 py-2">
                 {day}
               </div>
             ))}
@@ -200,13 +223,13 @@ export default function LogisticsCalendarPage() {
                   onClick={() => setSelectedDate(date)}
                   className={`
                     h-24 p-2 border rounded-lg transition-all
-                    ${isToday(date) ? "border-primary bg-primary/5" : "border-gray-200"}
+                    ${isToday(date) ? "border-primary bg-primary/5 dark:bg-primary/10" : "border-gray-200 dark:border-gray-700"}
                     ${isSelected ? "ring-2 ring-primary shadow-md" : "hover:shadow-md"}
-                    ${dayOrders.length > 0 ? "bg-blue-50" : "bg-white"}
+                    ${dayOrders.length > 0 ? "bg-blue-50 dark:bg-blue-900/20" : "bg-white dark:bg-gray-700"}
                   `}
                 >
                   <div className="flex flex-col h-full">
-                    <span className={`text-sm font-semibold ${isToday(date) ? "text-primary" : "text-gray-700"}`}>
+                    <span className={`text-sm font-semibold ${isToday(date) ? "text-primary" : "text-gray-700 dark:text-gray-200"}`}>
                       {date.getDate()}
                     </span>
 
@@ -215,7 +238,7 @@ export default function LogisticsCalendarPage() {
                         <div className="bg-primary text-white text-xs rounded-full px-2 py-1">
                           {dayOrders.length} {dayOrders.length === 1 ? "entrega" : "entregas"}
                         </div>
-                        <div className="text-xs text-gray-600 mt-1">
+                        <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                           ${dayOrders.reduce((sum, o) => sum + o.total_amount, 0).toFixed(0)}
                         </div>
                       </div>
@@ -228,8 +251,8 @@ export default function LogisticsCalendarPage() {
         </div>
 
         {/* Selected Date Details */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Calendar className="text-primary" size={20} />
             {selectedDate
               ? selectedDate.toLocaleDateString("es-ES", {
@@ -249,15 +272,15 @@ export default function LogisticsCalendarPage() {
                 ))
               ) : (
                 <div className="text-center py-12">
-                  <Truck className="text-gray-300 mx-auto mb-4" size={48} />
-                  <p className="text-gray-500">No hay entregas programadas</p>
+                  <Truck className="text-gray-300 dark:text-gray-600 mx-auto mb-4" size={48} />
+                  <p className="text-gray-500 dark:text-gray-400">No hay entregas programadas</p>
                 </div>
               )}
             </div>
           ) : (
             <div className="text-center py-12">
-              <Calendar className="text-gray-300 mx-auto mb-4" size={48} />
-              <p className="text-gray-500">
+              <Calendar className="text-gray-300 dark:text-gray-600 mx-auto mb-4" size={48} />
+              <p className="text-gray-500 dark:text-gray-400">
                 Selecciona una fecha del calendario para ver las entregas
               </p>
             </div>
@@ -278,7 +301,7 @@ export default function LogisticsCalendarPage() {
           title="Esta Semana"
           value={orders.filter(o => {
             if (!o.delivery_date) return false;
-            const date = new Date(o.delivery_date);
+            const date = parseLocalDate(o.delivery_date);
             const now = new Date();
             const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
             const weekEnd = new Date(now.setDate(now.getDate() - now.getDay() + 6));
@@ -292,7 +315,7 @@ export default function LogisticsCalendarPage() {
           title="Hoy"
           value={orders.filter(o => {
             if (!o.delivery_date) return false;
-            return new Date(o.delivery_date).toDateString() === new Date().toDateString();
+            return parseLocalDate(o.delivery_date).toDateString() === new Date().toDateString();
           }).length}
           subtitle="entregas pendientes"
           icon={Clock}
@@ -315,47 +338,47 @@ function DeliveryCard({ order, branches }: { order: Order; branches: Branch[] })
   const customerName = order.customer_name || (typeof order.metadata?.customer_name === 'string' ? order.metadata.customer_name : '') || "Cliente";
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-700">
       <div className="flex justify-between items-start mb-2">
         <div>
-          <p className="font-semibold text-gray-800">
+          <p className="font-semibold text-gray-800 dark:text-gray-100">
             {order.order_number || order.message_id || `#${order.id}`}
           </p>
-          <p className="text-sm text-gray-600">{customerName}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">{customerName}</p>
         </div>
-        <span className="font-bold text-gray-800">
+        <span className="font-bold text-gray-800 dark:text-gray-100">
           ${order.total_amount.toFixed(2)}
         </span>
       </div>
 
       <div className="space-y-1 text-sm">
         {branch && (
-          <div className="flex items-center gap-2 text-gray-600">
+          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
             <MapPin size={14} />
             <span>{branch.name}</span>
           </div>
         )}
 
         {order.delivery_address && (
-          <div className="flex items-start gap-2 text-gray-600">
+          <div className="flex items-start gap-2 text-gray-600 dark:text-gray-300">
             <MapPin size={14} className="mt-0.5" />
             <span className="text-xs">{order.delivery_address}</span>
           </div>
         )}
 
-        <div className="flex items-center gap-2 text-gray-600">
-          <Clock size={14} />
-          <span>
-            {order.delivery_date &&
-              new Date(order.delivery_date).toLocaleTimeString("es-ES", {
+        {order.delivery_date && order.delivery_date.includes('T') && (
+          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+            <Clock size={14} />
+            <span>
+              {new Date(order.delivery_date).toLocaleTimeString("es-ES", {
                 hour: "2-digit",
                 minute: "2-digit"
-              })
-            }
-          </span>
-        </div>
+              })}
+            </span>
+          </div>
+        )}
 
-        <div className="flex items-center gap-2 text-gray-600">
+        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
           <Package size={14} />
           <span>
             {order.items?.length || order.order_items?.length || order.products?.length || 0} productos
@@ -376,12 +399,12 @@ function StatCard({ title, value, subtitle, icon: Icon, color }: {
   color: string;
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600 font-medium">{title}</p>
-          <p className="text-2xl font-bold text-gray-800">{value}</p>
-          <p className="text-xs text-gray-500">{subtitle}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">{title}</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
         </div>
         <div className={`${color} p-3 rounded-lg`}>
           <Icon className="text-white" size={24} />

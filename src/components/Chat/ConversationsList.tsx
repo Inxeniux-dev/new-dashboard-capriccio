@@ -22,6 +22,13 @@ export default function ConversationsList({
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPlatform, setFilterPlatform] = useState<string>(platform || "all");
 
+  // Sincronizar filterPlatform con el prop platform cuando cambie
+  useEffect(() => {
+    if (platform) {
+      setFilterPlatform(platform);
+    }
+  }, [platform]);
+
   useEffect(() => {
     loadConversations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -71,12 +78,23 @@ export default function ConversationsList({
       } else {
         // Cargar de una plataforma específica
         const targetPlatform = platform || (filterPlatform !== "all" ? filterPlatform as Platform : "whatsapp");
+
+        console.log(`🔍 [DEBUG] Cargando conversaciones de ${targetPlatform}...`);
+        console.log(`🔍 [DEBUG] Endpoint: /api/conversations?platform=${targetPlatform}&limit=100`);
+
         const response = await apiClient.conversations.getAll({
           platform: targetPlatform,
           limit: 100
         });
 
+        console.log(`📡 [DEBUG] Response completo de ${targetPlatform}:`, response);
+        console.log(`📡 [DEBUG] Response.data:`, response.data);
+        console.log(`📡 [DEBUG] Es array?:`, Array.isArray(response.data));
+        console.log(`📡 [DEBUG] Cantidad de conversaciones:`, response.data?.length);
+
         const conversations = Array.isArray(response.data) ? response.data : [];
+        console.log(`✅ [DEBUG] Conversaciones parseadas (${conversations.length}):`, conversations);
+
         const validConversations = conversations.map(conv => ({
           ...conv,
           id: conv.id || `${targetPlatform}-${conv.contact_id}`,
@@ -86,11 +104,12 @@ export default function ConversationsList({
           last_message_time: conv.last_message_time || conv.updated_at || conv.created_at || new Date().toISOString()
         }));
 
+        console.log(`✅ [DEBUG] Conversaciones validadas (${validConversations.length}):`, validConversations);
         setConversations(validConversations);
 
         // If no conversations from API, use mock data
         if (validConversations.length === 0) {
-          console.log(`No ${targetPlatform} conversations from API, loading mock data...`);
+          console.log(`⚠️ [DEBUG] No ${targetPlatform} conversations from API, loading mock data...`);
           await simulateApiDelay(300);
           const mockConvs = mockConversations.filter(conv =>
             conv.platform === targetPlatform
@@ -130,6 +149,11 @@ export default function ConversationsList({
     return matchesSearch && matchesPlatform;
   });
 
+  console.log(`🔎 [DEBUG] Total conversations loaded: ${conversations.length}`);
+  console.log(`🔎 [DEBUG] Filter platform: ${filterPlatform}`);
+  console.log(`🔎 [DEBUG] Search term: "${searchTerm}"`);
+  console.log(`🔎 [DEBUG] Filtered conversations: ${filteredConversations.length}`);
+
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -145,34 +169,34 @@ export default function ConversationsList({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
           <MessageSquare className="text-primary" size={24} />
           Conversaciones
         </h2>
 
         {/* Search */}
         <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
           <input
             type="text"
             placeholder="Buscar conversaciones..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-gray-900 placeholder:text-gray-400"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
           />
         </div>
 
         {/* Platform Filter */}
         {!platform && (
           <div className="flex items-center gap-2">
-            <Filter size={16} className="text-gray-500" />
+            <Filter size={16} className="text-gray-500 dark:text-gray-400" />
             <select
               value={filterPlatform}
               onChange={(e) => setFilterPlatform(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white text-gray-900"
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
               <option value="all">Todas las plataformas</option>
               <option value="whatsapp">WhatsApp</option>
@@ -190,11 +214,11 @@ export default function ConversationsList({
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-gray-600 text-sm">Cargando conversaciones...</p>
+              <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm">Cargando conversaciones...</p>
             </div>
           </div>
         ) : filteredConversations.length > 0 ? (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {filteredConversations.map((conversation) => (
               <ConversationItem
                 key={conversation.id}
@@ -208,9 +232,9 @@ export default function ConversationsList({
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center px-4">
-              <MessageSquare className="text-gray-300 mx-auto mb-4" size={48} />
-              <p className="text-gray-500 font-medium">No hay conversaciones</p>
-              <p className="text-gray-400 text-sm mt-1">
+              <MessageSquare className="text-gray-300 dark:text-gray-600 mx-auto mb-4" size={48} />
+              <p className="text-gray-500 dark:text-gray-400 font-medium">No hay conversaciones</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
                 {searchTerm
                   ? "No se encontraron resultados para tu búsqueda"
                   : "Las conversaciones aparecerán aquí"}
@@ -234,8 +258,8 @@ function ConversationItem({ conversation, isSelected, onClick, formatTime }: Con
   return (
     <div
       onClick={onClick}
-      className={`p-4 cursor-pointer transition-colors hover:bg-gray-50 ${
-        isSelected ? "bg-blue-50 border-l-4 border-primary" : ""
+      className={`p-4 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 ${
+        isSelected ? "bg-blue-50 dark:bg-blue-900/20 border-l-4 border-primary" : ""
       }`}
     >
       <div className="flex items-start gap-3">
@@ -253,19 +277,19 @@ function ConversationItem({ conversation, isSelected, onClick, formatTime }: Con
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between mb-1">
             <div className="flex-1 min-w-0">
-              <h4 className={`font-semibold truncate ${conversation.unread_count > 0 ? "text-gray-900" : "text-gray-800"}`}>
+              <h4 className={`font-semibold truncate ${conversation.unread_count > 0 ? "text-gray-900 dark:text-gray-50" : "text-gray-800 dark:text-gray-100"}`}>
                 {conversation.contact_name}
               </h4>
               <PlatformBadge platform={conversation.platform} />
             </div>
-            <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 flex-shrink-0">
               {formatTime(conversation.last_message_time)}
             </span>
           </div>
 
           <p
             className={`text-sm truncate ${
-              conversation.unread_count > 0 ? "text-gray-900 font-medium" : "text-gray-600"
+              conversation.unread_count > 0 ? "text-gray-900 dark:text-gray-100 font-medium" : "text-gray-600 dark:text-gray-300"
             }`}
           >
             {conversation.last_message}

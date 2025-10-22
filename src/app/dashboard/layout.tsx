@@ -22,10 +22,10 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-warm-white">
+      <div className="flex items-center justify-center h-screen bg-warm-white dark:bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Cargando...</p>
         </div>
       </div>
     );
@@ -36,7 +36,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar currentPath={pathname} />
       <main className="flex-1 lg:ml-0">
         {children}

@@ -2,14 +2,11 @@
 
 import { useRequireAuth } from "@/contexts/AuthContext";
 import {
-  Package, CheckCircle, Clock, TrendingUp, AlertCircle,
+  Package, CheckCircle, Clock, AlertCircle,
   Star, Award, Target, Coffee, Zap, ChevronRight, Filter,
   Calendar, User
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import apiClient from "@/lib/api-client";
-import type { Order } from "@/types/api";
 
 interface Task {
   id: string;
@@ -45,9 +42,7 @@ interface Achievement {
 
 export default function EmployeeDashboardPage() {
   const { user, loading } = useRequireAuth(["empleado", "employee"]);
-  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [myOrders, setMyOrders] = useState<Order[]>([]);
   const [performance, setPerformance] = useState<Performance>({
     tasks_completed: 0,
     tasks_pending: 0,
@@ -72,20 +67,6 @@ export default function EmployeeDashboardPage() {
   const loadData = async () => {
     try {
       setLoadingData(true);
-
-      // Cargar órdenes si el usuario tiene sucursal
-      if (user?.branch_id) {
-        try {
-          const ordersResponse = await apiClient.orders.getByBranch(
-            user.branch_id,
-            { limit: 20 }
-          );
-          const orders = ordersResponse.data || [];
-          setMyOrders(orders);
-        } catch (error) {
-          console.error("Error loading orders:", error);
-        }
-      }
 
       // Datos de tareas de ejemplo
       const mockTasks: Task[] = [
@@ -255,7 +236,7 @@ export default function EmployeeDashboardPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando tu espacio de trabajo...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Cargando tu espacio de trabajo...</p>
         </div>
       </div>
     );
@@ -322,15 +303,15 @@ export default function EmployeeDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Tasks Section */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-800">Mis Tareas</h2>
+              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Mis Tareas</h2>
               <div className="flex items-center gap-2">
-                <Filter size={18} className="text-gray-500" />
+                <Filter size={18} className="text-gray-500 dark:text-gray-400" />
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value as "all" | "pending" | "in_progress" | "completed")}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800"
                 >
                   <option value="all">Todas</option>
                   <option value="pending">Pendientes</option>
@@ -354,9 +335,9 @@ export default function EmployeeDashboardPage() {
                 ))
               ) : (
                 <div className="text-center py-12">
-                  <Coffee className="text-gray-300 mx-auto mb-4" size={48} />
-                  <p className="text-gray-500 font-medium">No hay tareas {filterStatus !== "all" ? filterStatus.replace("_", " ") : ""}</p>
-                  <p className="text-gray-400 text-sm mt-1">
+                  <Coffee className="text-gray-300 dark:text-gray-600 mx-auto mb-4" size={48} />
+                  <p className="text-gray-500 dark:text-gray-400 font-medium">No hay tareas {filterStatus !== "all" ? filterStatus.replace("_", " ") : ""}</p>
+                  <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
                     ¡Excelente trabajo! Todas tus tareas están al día
                   </p>
                 </div>
@@ -365,24 +346,24 @@ export default function EmployeeDashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Acciones Rápidas</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Acciones Rápidas</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <button className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-center">
+              <button className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-center">
                 <Package className="text-primary mx-auto mb-2" size={24} />
-                <span className="text-xs text-gray-700">Ver Pedidos</span>
+                <span className="text-xs text-gray-700 dark:text-gray-200">Ver Pedidos</span>
               </button>
-              <button className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-center">
+              <button className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-center">
                 <Calendar className="text-primary mx-auto mb-2" size={24} />
-                <span className="text-xs text-gray-700">Mi Horario</span>
+                <span className="text-xs text-gray-700 dark:text-gray-200">Mi Horario</span>
               </button>
-              <button className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-center">
+              <button className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-center">
                 <AlertCircle className="text-primary mx-auto mb-2" size={24} />
-                <span className="text-xs text-gray-700">Reportar</span>
+                <span className="text-xs text-gray-700 dark:text-gray-200">Reportar</span>
               </button>
-              <button className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-center">
+              <button className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-center">
                 <User className="text-primary mx-auto mb-2" size={24} />
-                <span className="text-xs text-gray-700">Mi Perfil</span>
+                <span className="text-xs text-gray-700 dark:text-gray-200">Mi Perfil</span>
               </button>
             </div>
           </div>
@@ -391,18 +372,18 @@ export default function EmployeeDashboardPage() {
         {/* Right Sidebar */}
         <div className="space-y-4">
           {/* Achievements */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
               <Award className="text-primary" size={20} />
               Logros Recientes
             </h3>
             <div className="space-y-3">
               {performance.achievements.map((achievement) => (
-                <div key={achievement.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div key={achievement.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                   <div className="text-2xl">{achievement.icon}</div>
                   <div className="flex-1">
-                    <p className="font-medium text-gray-800 text-sm">{achievement.title}</p>
-                    <p className="text-xs text-gray-500">{achievement.description}</p>
+                    <p className="font-medium text-gray-800 dark:text-gray-100 text-sm">{achievement.title}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{achievement.description}</p>
                     <p className="text-xs text-primary font-medium mt-1">+{achievement.points} puntos</p>
                   </div>
                 </div>
@@ -415,20 +396,20 @@ export default function EmployeeDashboardPage() {
           </div>
 
           {/* Progress */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
               <Target className="text-primary" size={20} />
               Mi Progreso
             </h3>
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-600">Nivel {performance.level}</span>
-                  <span className="text-gray-800 font-medium">
+                  <span className="text-gray-600 dark:text-gray-300">Nivel {performance.level}</span>
+                  <span className="text-gray-800 dark:text-gray-100 font-medium">
                     {performance.points} / {performance.next_level_points}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                   <div
                     className="bg-primary h-2 rounded-full transition-all"
                     style={{ width: `${(performance.points / performance.next_level_points) * 100}%` }}
@@ -438,15 +419,15 @@ export default function EmployeeDashboardPage() {
 
               <div className="pt-3 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tareas del Mes</span>
-                  <span className="text-gray-800 font-medium">45 / 50</span>
+                  <span className="text-gray-600 dark:text-gray-300">Tareas del Mes</span>
+                  <span className="text-gray-800 dark:text-gray-100 font-medium">45 / 50</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Puntualidad</span>
+                  <span className="text-gray-600 dark:text-gray-300">Puntualidad</span>
                   <span className="text-green-600 font-medium">95%</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Precisión</span>
+                  <span className="text-gray-600 dark:text-gray-300">Precisión</span>
                   <span className="text-blue-600 font-medium">98%</span>
                 </div>
               </div>
@@ -454,9 +435,9 @@ export default function EmployeeDashboardPage() {
           </div>
 
           {/* Tips */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-3">💡 Consejo del Día</h3>
-            <p className="text-sm text-gray-600">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-xl p-6">
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">💡 Consejo del Día</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Organiza tus tareas por prioridad al inicio del día para maximizar tu productividad.
               ¡Las tareas urgentes primero!
             </p>
@@ -467,43 +448,43 @@ export default function EmployeeDashboardPage() {
       {/* Task Detail Modal */}
       {selectedTask && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Detalles de Tarea</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Detalles de Tarea</h2>
 
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600">Título</p>
-                <p className="font-medium text-gray-800">{selectedTask.title}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Título</p>
+                <p className="font-medium text-gray-800 dark:text-gray-100">{selectedTask.title}</p>
               </div>
 
               <div>
-                <p className="text-sm text-gray-600">Descripción</p>
-                <p className="text-gray-800">{selectedTask.description}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Descripción</p>
+                <p className="text-gray-800 dark:text-gray-100">{selectedTask.description}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-600">Prioridad</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Prioridad</p>
                   <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getPriorityColor(selectedTask.priority)}`}>
                     {selectedTask.priority === "high" ? "Alta" : selectedTask.priority === "medium" ? "Media" : "Baja"}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Fecha Límite</p>
-                  <p className="font-medium text-gray-800">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Fecha Límite</p>
+                  <p className="font-medium text-gray-800 dark:text-gray-100">
                     {new Date(selectedTask.due_date).toLocaleDateString("es-ES")}
                   </p>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm text-gray-600">Asignado por</p>
-                <p className="text-gray-800">{selectedTask.assigned_by}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Asignado por</p>
+                <p className="text-gray-800 dark:text-gray-100">{selectedTask.assigned_by}</p>
               </div>
 
               {selectedTask.order_id && (
                 <div>
-                  <p className="text-sm text-gray-600">Pedido Relacionado</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Pedido Relacionado</p>
                   <p className="font-medium text-primary">#{selectedTask.order_id}</p>
                 </div>
               )}
@@ -512,7 +493,7 @@ export default function EmployeeDashboardPage() {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setSelectedTask(null)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Cerrar
               </button>
@@ -553,13 +534,13 @@ function TaskCard({
 }) {
   return (
     <div
-      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all cursor-pointer"
+      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-all cursor-pointer"
       onClick={onSelect}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1">
-          <h4 className="font-medium text-gray-800">{task.title}</h4>
-          <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+          <h4 className="font-medium text-gray-800 dark:text-gray-100">{task.title}</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{task.description}</p>
         </div>
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
           {task.priority === "high" ? "Alta" : task.priority === "medium" ? "Media" : "Baja"}
@@ -567,7 +548,7 @@ function TaskCard({
       </div>
 
       <div className="flex items-center justify-between mt-3">
-        <div className="flex items-center gap-3 text-sm text-gray-500">
+        <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
           <div className="flex items-center gap-1">
             <Clock size={14} />
             <span>{getTimeRemaining(task.due_date)}</span>

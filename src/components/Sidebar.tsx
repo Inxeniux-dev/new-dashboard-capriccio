@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -18,14 +18,12 @@ import {
   Building2,
   Truck,
   ClipboardList,
-  ShoppingCart,
   Calendar,
   Bell,
   FileText,
   Bot,
   Shield,
   Store,
-  UserCheck,
   PackageCheck,
   TrendingUp,
   Clock,
@@ -319,7 +317,9 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
   const pathname = usePathname();
   const actualPath = currentPath || pathname;
 
-  const menuItems = user ? getMenuItemsByRole(user.role) : [];
+  const menuItems = useMemo(() => {
+    return user ? getMenuItemsByRole(user.role) : [];
+  }, [user]);
 
   // Auto-expand submenu if current path is inside it
   useEffect(() => {
@@ -340,16 +340,16 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-primary/5 to-secondary/5">
+      <div className="p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary/5 to-secondary/5">
         <div className="flex items-center justify-between">
           {!isCollapsed ? (
-            <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-br from-primary to-secondary text-white w-11 h-11 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="font-bold text-lg">C</span>
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <div className="bg-gradient-to-br from-primary to-secondary text-white w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                <span className="font-bold text-base sm:text-lg">C</span>
               </div>
-              <div>
-                <h2 className="font-bold text-gray-800 text-lg">Capriccio</h2>
-                <p className="text-xs text-gray-500 font-medium">Homemade Goods CRM</p>
+              <div className="min-w-0 flex-1">
+                <h2 className="font-bold text-gray-800 dark:text-gray-100 text-base sm:text-lg truncate">Capriccio</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">Homemade Goods CRM</p>
               </div>
             </div>
           ) : (
@@ -357,29 +357,41 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
               <span className="font-bold text-lg">C</span>
             </div>
           )}
+
+          {/* Desktop collapse button */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="lg:block hidden p-2 hover:bg-white/50 text-gray-600 hover:text-primary rounded-lg transition-all duration-200"
+            className="hidden lg:flex p-2 hover:bg-white/50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-primary rounded-lg transition-all duration-200 ml-2 flex-shrink-0"
             title={isCollapsed ? "Expandir" : "Contraer"}
+            aria-label={isCollapsed ? "Expandir sidebar" : "Contraer sidebar"}
           >
             {isCollapsed ? <ChevronRight size={20} /> : <Menu size={20} />}
+          </button>
+
+          {/* Mobile close button */}
+          <button
+            onClick={() => setIsMobileOpen(false)}
+            className="lg:hidden flex p-2 hover:bg-white/50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-500 rounded-lg transition-all duration-200 ml-2 flex-shrink-0"
+            aria-label="Cerrar menú"
+          >
+            <X size={20} />
           </button>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-3 sm:p-4 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
         {menuItems.map((item, index) => {
           // Handle dividers
           if (item.divider) {
             return (
               <div key={`divider-${index}`} className="py-2">
                 {!isCollapsed && (
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4">
+                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">
                     {item.label}
                   </p>
                 )}
-                {isCollapsed && <hr className="border-gray-200" />}
+                {isCollapsed && <hr className="border-gray-200 dark:border-gray-700" />}
               </div>
             );
           }
@@ -401,10 +413,10 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
                   }
                 }}
                 className={clsx(
-                  "w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 group relative",
+                  "w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg transition-all duration-200 group relative",
                   isActive
                     ? "bg-primary text-white shadow-md"
-                    : "text-gray-700 hover:bg-gray-100",
+                    : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95",
                   isCollapsed && "justify-center px-2"
                 )}
               >
@@ -416,19 +428,19 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
                   size={20}
                   className={clsx(
                     "flex-shrink-0",
-                    isActive ? "text-white" : "text-gray-500 group-hover:text-primary"
+                    isActive ? "text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-primary"
                   )}
                 />
 
                 {!isCollapsed && (
                   <>
-                    <span className="font-medium flex-1 text-left text-sm">{item.label}</span>
+                    <span className="font-medium flex-1 text-left text-xs sm:text-sm truncate">{item.label}</span>
 
                     {/* Badge */}
                     {item.badge && (
                       <span className={clsx(
                         "px-2 py-0.5 text-xs font-bold rounded-full",
-                        item.badgeColor || "bg-gray-200 text-gray-700",
+                        item.badgeColor || "bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200",
                         isActive && "bg-white/20 text-white"
                       )}>
                         {item.badge}
@@ -458,7 +470,7 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
 
               {/* Submenu */}
               {hasSubmenu && isSubmenuExpanded && !isCollapsed && (
-                <div className="ml-6 mt-1 space-y-0.5">
+                <div className="ml-4 sm:ml-6 mt-1 space-y-0.5">
                   {item.submenu?.map((subitem) => {
                     const isSubActive = actualPath === subitem.href ||
                                        actualPath?.includes(subitem.href.split('?')[0]);
@@ -472,20 +484,20 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
                           setIsMobileOpen(false);
                         }}
                         className={clsx(
-                          "w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors text-sm",
+                          "w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-200 text-xs sm:text-sm",
                           isSubActive
                             ? "bg-primary/10 text-primary font-medium"
-                            : "text-gray-600 hover:bg-gray-50"
+                            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95"
                         )}
                       >
-                        <SubIcon size={16} />
-                        <span className="flex-1 text-left">{subitem.label}</span>
+                        <SubIcon size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
+                        <span className="flex-1 text-left truncate">{subitem.label}</span>
 
                         {/* Submenu badge */}
                         {subitem.badge && (
                           <span className={clsx(
                             "px-1.5 py-0.5 text-xs font-bold rounded-full",
-                            subitem.badgeColor || "bg-gray-200 text-gray-700"
+                            subitem.badgeColor || "bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200"
                           )}>
                             {subitem.badge}
                           </span>
@@ -501,20 +513,20 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
       </nav>
 
       {/* User Section */}
-      <div className="p-4 border-t border-gray-200 bg-gray-50">
+      <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
         {!isCollapsed ? (
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-md">
-                <span className="text-white font-bold">
+          <div className="space-y-2 sm:space-y-3">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+                <span className="text-white font-bold text-sm sm:text-base">
                   {user?.full_name?.charAt(0).toUpperCase() || "U"}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-800 truncate">
+                <p className="font-semibold text-gray-800 dark:text-gray-100 truncate text-sm sm:text-base">
                   {user?.full_name || "Usuario"}
                 </p>
-                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary mt-1">
                   {user?.role === "logistica" ? "Logística" :
                    user?.role === "empleado" ? "Empleado" :
@@ -525,16 +537,16 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
 
             <button
               onClick={logout}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-200 shadow-sm"
+              className="w-full flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-600 hover:border-red-200 dark:hover:border-red-700 transition-all duration-200 shadow-sm"
             >
-              <LogOut size={18} />
-              <span className="font-medium text-sm">Cerrar Sesión</span>
+              <LogOut size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="font-medium text-xs sm:text-sm">Cerrar Sesión</span>
             </button>
           </div>
         ) : (
           <button
             onClick={logout}
-            className="w-full flex justify-center p-3 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-200 shadow-sm"
+            className="w-full flex justify-center p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-600 hover:border-red-200 dark:hover:border-red-700 transition-all duration-200 shadow-sm"
             title="Cerrar Sesión"
           >
             <LogOut size={20} />
@@ -549,28 +561,32 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
       {/* Mobile overlay */}
       {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-in fade-in duration-200"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
       {/* Mobile menu button */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg shadow-lg hover:bg-primary-hover transition-colors"
+        className={clsx(
+          "lg:hidden fixed top-4 z-50 p-3 bg-primary text-white rounded-xl shadow-lg hover:bg-primary-hover transition-all duration-200",
+          isMobileOpen ? "left-[calc(100vw-5rem)] sm:left-[calc(20rem+1rem)]" : "left-4"
+        )}
         onClick={() => setIsMobileOpen(!isMobileOpen)}
+        aria-label={isMobileOpen ? "Cerrar menú" : "Abrir menú"}
       >
-        {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
+        {isMobileOpen ? <X size={22} /> : <Menu size={22} />}
       </button>
 
       {/* Sidebar */}
       <aside
         className={clsx(
-          "fixed left-0 top-0 h-full bg-white shadow-xl transition-all duration-300 z-50",
+          "fixed left-0 top-0 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out z-50 border-r border-gray-200 dark:border-gray-700",
           // Desktop behavior
           "lg:relative lg:translate-x-0",
-          isCollapsed ? "lg:w-16" : "lg:w-72",
-          // Mobile behavior
-          "lg:block w-72",
+          isCollapsed ? "lg:w-20" : "lg:w-72",
+          // Mobile behavior - responsive width
+          "w-[85vw] sm:w-80",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >

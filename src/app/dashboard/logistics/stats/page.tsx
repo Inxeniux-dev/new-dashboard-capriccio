@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
 import {
   TrendingUp, TrendingDown, Package, Truck, Clock, CheckCircle,
-  XCircle, AlertCircle, Calendar, DollarSign, MapPin, Users,
+  XCircle, DollarSign, MapPin, Users,
   BarChart3, PieChart, Activity, Target
 } from "lucide-react";
 import apiClient from "@/lib/api-client";
@@ -49,36 +49,7 @@ export default function LogisticsStatsPage() {
     late: 0,
   });
 
-  useEffect(() => {
-    loadData();
-  }, [timeRange]);
-
-  const loadData = async () => {
-    try {
-      setLoadingData(true);
-
-      // Cargar órdenes
-      const ordersResponse = await apiClient.orders.getAll({ limit: 500 }) as { data?: Order[]; orders?: Order[] };
-      const ordersData = ordersResponse.orders || ordersResponse.data || [];
-
-      // Filtrar por rango de tiempo
-      const filteredOrders = filterByTimeRange(ordersData, timeRange);
-      setOrders(filteredOrders);
-
-      // Calcular estadísticas
-      calculateStats(filteredOrders);
-
-      // Cargar sucursales
-      const branchesResponse = await apiClient.branches.getAll();
-      setBranches(branchesResponse.data || []);
-    } catch (error) {
-      console.error("Error loading stats data:", error);
-    } finally {
-      setLoadingData(false);
-    }
-  };
-
-  const filterByTimeRange = (data: Order[], range: TimeRange["value"]) => {
+  const filterByTimeRange = useCallback((data: Order[], range: TimeRange["value"]) => {
     const now = new Date();
     const startDate = new Date();
 
@@ -101,9 +72,9 @@ export default function LogisticsStatsPage() {
     }
 
     return data.filter((order) => new Date(order.created_at) >= startDate);
-  };
+  }, []);
 
-  const calculateStats = (ordersData: Order[]) => {
+  const calculateStats = useCallback((ordersData: Order[]) => {
     const stats: DeliveryStats = {
       total: ordersData.length,
       completed: ordersData.filter((o) => o.status === "completed").length,
@@ -119,7 +90,36 @@ export default function LogisticsStatsPage() {
     stats.late = completedOrders.length - stats.onTime;
 
     setDeliveryStats(stats);
-  };
+  }, []);
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoadingData(true);
+
+      // Cargar órdenes
+      const ordersResponse = await apiClient.orders.getAll({ limit: 500 }) as { data?: Order[]; orders?: Order[] };
+      const ordersData = ordersResponse.orders || ordersResponse.data || [];
+
+      // Filtrar por rango de tiempo
+      const filteredOrders = filterByTimeRange(ordersData, timeRange);
+      setOrders(filteredOrders);
+
+      // Calcular estadísticas
+      calculateStats(filteredOrders);
+
+      // Cargar sucursales
+      const branchesResponse = await apiClient.branches.getAll();
+      setBranches(branchesResponse.data || []);
+    } catch (error) {
+      console.error("Error loading stats data:", error);
+    } finally {
+      setLoadingData(false);
+    }
+  }, [timeRange, filterByTimeRange, calculateStats]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const getCompletionRate = () => {
     if (deliveryStats.total === 0) return 0;
@@ -204,7 +204,7 @@ export default function LogisticsStatsPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando estadísticas...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Cargando estadísticas...</p>
         </div>
       </div>
     );
@@ -253,11 +253,11 @@ export default function LogisticsStatsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Estadísticas de Logística</h1>
-          <p className="text-gray-600">Análisis de rendimiento y métricas clave</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Estadísticas de Logística</h1>
+          <p className="text-gray-600 dark:text-gray-300">Análisis de rendimiento y métricas clave</p>
         </div>
 
-        <div className="flex items-center gap-2 bg-white rounded-lg shadow-md p-1">
+        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg shadow-md p-1">
           {timeRanges.map((range) => (
             <button
               key={range.value}
@@ -265,7 +265,7 @@ export default function LogisticsStatsPage() {
               className={`px-4 py-2 rounded-lg transition-all ${
                 timeRange === range.value
                   ? "bg-primary text-white"
-                  : "text-gray-600 hover:bg-gray-100"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               }`}
             >
               {range.label}
@@ -277,11 +277,11 @@ export default function LogisticsStatsPage() {
       {/* Main Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsCards.map((stat, index) => (
-          <div key={index} className="bg-white rounded-xl shadow-md p-6">
+          <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm text-gray-600 font-medium">{stat.title}</p>
-                <p className="text-3xl font-bold text-gray-800 mt-2">{stat.value}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">{stat.title}</p>
+                <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{stat.value}</p>
                 {stat.change !== undefined && (
                   <div className="flex items-center mt-2">
                     {stat.trend === "up" ? (
@@ -295,7 +295,7 @@ export default function LogisticsStatsPage() {
                   </div>
                 )}
                 {stat.subtitle && (
-                  <p className="text-xs text-gray-500 mt-1">{stat.subtitle}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stat.subtitle}</p>
                 )}
               </div>
               <div className={`${stat.color} p-3 rounded-lg`}>
@@ -309,8 +309,8 @@ export default function LogisticsStatsPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Order Status Distribution */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
             <PieChart className="text-primary" size={20} />
             Distribución de Estados
           </h3>
@@ -341,30 +341,30 @@ export default function LogisticsStatsPage() {
           <div className="mt-6 grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-2xl font-bold text-green-600">{deliveryStats.completed}</p>
-              <p className="text-xs text-gray-500">Completadas</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Completadas</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-yellow-600">{deliveryStats.pending}</p>
-              <p className="text-xs text-gray-500">Pendientes</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Pendientes</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-red-600">{deliveryStats.cancelled}</p>
-              <p className="text-xs text-gray-500">Canceladas</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Canceladas</p>
             </div>
           </div>
         </div>
 
         {/* Daily Trend */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Activity className="text-primary" size={20} />
             Tendencia Semanal
           </h3>
           <div className="space-y-3">
             {getDailyTrend().map((day, index) => (
               <div key={index} className="flex items-center gap-3">
-                <span className="text-sm text-gray-600 w-16">{day.date}</span>
-                <div className="flex-1 bg-gray-200 rounded-full h-8 relative overflow-hidden">
+                <span className="text-sm text-gray-600 dark:text-gray-300 w-16">{day.date}</span>
+                <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-8 relative overflow-hidden">
                   <div
                     className="absolute left-0 top-0 h-full bg-primary rounded-full flex items-center justify-end pr-2"
                     style={{
@@ -382,28 +382,28 @@ export default function LogisticsStatsPage() {
       </div>
 
       {/* Top Branches */}
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
           <MapPin className="text-primary" size={20} />
           Top Sucursales por Órdenes
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Sucursal</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Órdenes</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">Ingresos</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Promedio</th>
+              <tr className="border-b border-gray-200 dark:border-gray-700">
+                <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-200">Sucursal</th>
+                <th className="text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-200">Órdenes</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-200">Ingresos</th>
+                <th className="text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-200">Promedio</th>
               </tr>
             </thead>
             <tbody>
               {getTopBranches().map((branch, index) => (
-                <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                <tr key={index} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${index === 0 ? "bg-green-500" : index === 1 ? "bg-blue-500" : index === 2 ? "bg-purple-500" : "bg-gray-400"}`} />
-                      <span className="font-medium text-gray-800">{branch.name}</span>
+                      <div className={`w-2 h-2 rounded-full ${index === 0 ? "bg-green-500" : index === 1 ? "bg-blue-500" : index === 2 ? "bg-purple-500" : "bg-gray-400 dark:bg-gray-500"}`} />
+                      <span className="font-medium text-gray-800 dark:text-gray-100">{branch.name}</span>
                     </div>
                   </td>
                   <td className="text-center py-3 px-4">
@@ -411,10 +411,10 @@ export default function LogisticsStatsPage() {
                       {branch.orders}
                     </span>
                   </td>
-                  <td className="text-right py-3 px-4 font-bold text-gray-800">
+                  <td className="text-right py-3 px-4 font-bold text-gray-800 dark:text-gray-100">
                     ${branch.revenue.toFixed(0)}
                   </td>
-                  <td className="text-center py-3 px-4 text-gray-600">
+                  <td className="text-center py-3 px-4 text-gray-600 dark:text-gray-300">
                     ${branch.orders > 0 ? (branch.revenue / branch.orders).toFixed(0) : 0}
                   </td>
                 </tr>
@@ -471,14 +471,14 @@ function StatusBar({
     <div className="space-y-2">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <Icon size={16} className="text-gray-500" />
-          <span className="text-sm text-gray-700">{label}</span>
+          <Icon size={16} className="text-gray-500 dark:text-gray-400" />
+          <span className="text-sm text-gray-700 dark:text-gray-200">{label}</span>
         </div>
-        <span className="text-sm font-bold text-gray-800">
+        <span className="text-sm font-bold text-gray-800 dark:text-gray-100">
           {value} ({percentage.toFixed(1)}%)
         </span>
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-2">
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
         <div className={`${color} h-2 rounded-full transition-all`} style={{ width: `${percentage}%` }} />
       </div>
     </div>
@@ -499,15 +499,15 @@ function MetricCard({
   color: string;
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
       <div className="flex items-start gap-3">
         <div className={`p-2 rounded-lg ${color}`}>
           <Icon size={20} />
         </div>
         <div className="flex-1">
-          <p className="text-sm text-gray-600">{title}</p>
-          <p className="text-xl font-bold text-gray-800 mt-1">{value}</p>
-          <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">{title}</p>
+          <p className="text-xl font-bold text-gray-800 dark:text-gray-100 mt-1">{value}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>
         </div>
       </div>
     </div>

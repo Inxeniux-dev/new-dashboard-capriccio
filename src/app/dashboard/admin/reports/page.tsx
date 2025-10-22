@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
 import {
-  FileText, Download, Filter, Calendar, TrendingUp, TrendingDown,
+  FileText, Download, TrendingUp, TrendingDown,
   BarChart3, PieChart, Activity, DollarSign, Users, Package,
-  Clock, AlertCircle, CheckCircle, Printer, Mail, Share2
+  CheckCircle, Printer, Mail, Share2
 } from "lucide-react";
 import apiClient from "@/lib/api-client";
-import type { Order, Branch, User } from "@/types/api";
+import type { Branch } from "@/types/api";
 
 interface ReportData {
   revenue: {
@@ -187,7 +187,7 @@ export default function AdminReportsPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando reportes...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Cargando reportes...</p>
         </div>
       </div>
     );
@@ -198,14 +198,14 @@ export default function AdminReportsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Centro de Reportes</h1>
-          <p className="text-gray-600">Análisis y reportes detallados del negocio</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Centro de Reportes</h1>
+          <p className="text-gray-600 dark:text-gray-300">Análisis y reportes detallados del negocio</p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => handleExportReport("pdf")}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200"
           >
             <Download size={18} />
             Exportar
@@ -222,11 +222,11 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-md p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Report Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               Tipo de Reporte
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -237,7 +237,7 @@ export default function AdminReportsPage() {
                   className={`p-2 rounded-lg border transition-all ${
                     reportType === type.value
                       ? "border-primary bg-primary/10 text-primary"
-                      : "border-gray-200 hover:bg-gray-50"
+                      : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
                   }`}
                 >
                   <type.icon size={18} className="mx-auto mb-1" />
@@ -249,13 +249,13 @@ export default function AdminReportsPage() {
 
           {/* Time Range */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               Período
             </label>
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
             >
               <option value="today">Hoy</option>
               <option value="week">Esta Semana</option>
@@ -268,13 +268,13 @@ export default function AdminReportsPage() {
 
           {/* Branch Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               Sucursal
             </label>
             <select
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
             >
               <option value="all">Todas las Sucursales</option>
               {branches.map((branch) => (
@@ -289,21 +289,21 @@ export default function AdminReportsPage() {
           {timeRange === "custom" && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Desde</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Desde</label>
                 <input
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Hasta</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Hasta</label>
                 <input
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                 />
               </div>
             </div>
@@ -311,17 +311,17 @@ export default function AdminReportsPage() {
 
           {/* Quick Actions */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               Acciones Rápidas
             </label>
             <div className="flex gap-2">
-              <button className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+              <button className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <Printer size={18} />
               </button>
-              <button className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+              <button className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <Mail size={18} />
               </button>
-              <button className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+              <button className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <Share2 size={18} />
               </button>
             </div>
@@ -370,16 +370,16 @@ export default function AdminReportsPage() {
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Revenue Chart */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
                 <BarChart3 className="text-primary" size={20} />
                 Ingresos por Mes
               </h3>
               <div className="space-y-3">
                 {Object.entries(reportData.revenue.byMonth).map(([month, amount]) => (
                   <div key={month} className="flex items-center gap-3">
-                    <span className="text-sm text-gray-600 w-20">{month}</span>
-                    <div className="flex-1 bg-gray-200 rounded-full h-8 relative overflow-hidden">
+                    <span className="text-sm text-gray-600 dark:text-gray-300 w-20">{month}</span>
+                    <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-8 relative overflow-hidden">
                       <div
                         className="absolute left-0 top-0 h-full bg-primary rounded-full flex items-center justify-end pr-2"
                         style={{
@@ -397,8 +397,8 @@ export default function AdminReportsPage() {
             </div>
 
             {/* Order Status Distribution */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
                 <PieChart className="text-primary" size={20} />
                 Distribución de Órdenes
               </h3>
@@ -415,23 +415,23 @@ export default function AdminReportsPage() {
                     <div key={status} className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${colors[status]}`} />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-700 capitalize">{status}</p>
-                        <p className="text-xs text-gray-500">{count} ({percentage}%)</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-200 capitalize">{status}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{count} ({percentage}%)</p>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-gray-600">Valor Promedio</span>
-                  <span className="font-bold text-gray-800">
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Valor Promedio</span>
+                  <span className="font-bold text-gray-800 dark:text-gray-100">
                     ${reportData.orders.average_value.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Tasa de Éxito</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Tasa de Éxito</span>
                   <span className="font-bold text-green-600">
                     {((reportData.orders.completed / reportData.orders.total) * 100).toFixed(1)}%
                   </span>
@@ -440,8 +440,8 @@ export default function AdminReportsPage() {
             </div>
 
             {/* Customer Platforms */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
                 <Users className="text-primary" size={20} />
                 Clientes por Plataforma
               </h3>
@@ -456,10 +456,10 @@ export default function AdminReportsPage() {
                   return (
                     <div key={platform}>
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-gray-700">{platform}</span>
-                        <span className="text-sm text-gray-600">{count} ({percentage}%)</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{platform}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-300">{count} ({percentage}%)</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                         <div
                           className={`${colors[platform]} h-2 rounded-full transition-all`}
                           style={{ width: `${percentage}%` }}
@@ -472,22 +472,22 @@ export default function AdminReportsPage() {
             </div>
 
             {/* Top Performers */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
                 <Activity className="text-primary" size={20} />
                 Mejores Empleados
               </h3>
               <div className="space-y-3">
                 {reportData.employees.top_performers.map((employee, index) => (
-                  <div key={employee.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div key={employee.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
                       index === 0 ? "bg-yellow-500" : index === 1 ? "bg-gray-400" : "bg-orange-600"
                     }`}>
                       {index + 1}
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium text-gray-800">{employee.name}</p>
-                      <p className="text-xs text-gray-500">Puntuación: {employee.score}</p>
+                      <p className="font-medium text-gray-800 dark:text-gray-100">{employee.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Puntuación: {employee.score}</p>
                     </div>
                     {index === 0 && <span className="text-yellow-500">🏆</span>}
                   </div>
@@ -497,24 +497,24 @@ export default function AdminReportsPage() {
           </div>
 
           {/* Detailed Table */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Detalles del Reporte</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Detalles del Reporte</h3>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Métrica</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valor Actual</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Período Anterior</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cambio</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tendencia</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Métrica</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor Actual</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Período Anterior</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cambio</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tendencia</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">Ingresos</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">${reportData.revenue.total.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">$111,250</td>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">Ingresos</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">${reportData.revenue.total.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">$111,250</td>
                     <td className="px-4 py-3 text-sm">
                       <span className="text-green-600 font-medium">+12.5%</span>
                     </td>
@@ -522,10 +522,10 @@ export default function AdminReportsPage() {
                       <TrendingUp className="text-green-500" size={16} />
                     </td>
                   </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">Órdenes</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{reportData.orders.total}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">785</td>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">Órdenes</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{reportData.orders.total}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">785</td>
                     <td className="px-4 py-3 text-sm">
                       <span className="text-green-600 font-medium">+8.3%</span>
                     </td>
@@ -533,10 +533,10 @@ export default function AdminReportsPage() {
                       <TrendingUp className="text-green-500" size={16} />
                     </td>
                   </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">Clientes Nuevos</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{reportData.customers.new}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">145</td>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">Clientes Nuevos</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{reportData.customers.new}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">145</td>
                     <td className="px-4 py-3 text-sm">
                       <span className="text-red-600 font-medium">-17.2%</span>
                     </td>
@@ -570,11 +570,11 @@ function MetricCard({
   subtitle?: string;
 }) {
   return (
-    <div className="bg-white rounded-xl shadow-md p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm text-gray-600 font-medium">{title}</p>
-          <p className="text-2xl font-bold text-gray-800 mt-2">{value}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">{title}</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100 mt-2">{value}</p>
           {change !== undefined && (
             <div className="flex items-center mt-2">
               {trend === "up" ? (
@@ -587,7 +587,7 @@ function MetricCard({
               </span>
             </div>
           )}
-          {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>}
         </div>
         <div className="p-3 bg-primary/10 rounded-lg">
           <Icon className="text-primary" size={24} />
