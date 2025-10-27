@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
-import { Package, Filter, Calendar, MapPin, User, Phone, Eye, ShoppingCart, Info, X } from "lucide-react";
+import { Package, Filter, Calendar, MapPin, User, Phone, Eye, ShoppingCart, Info, X, CheckCircle, DollarSign, AlertCircle } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import type { Order, Branch } from "@/types/api";
+import PaymentStatusModal from "@/components/PaymentStatusModal";
 
 export default function LogisticsOrdersPage() {
   const { user, loading } = useRequireAuth(["logistics", "logistica", "admin"]);
@@ -19,6 +20,8 @@ export default function LogisticsOrdersPage() {
   const [filterStatus, setFilterStatus] = useState("unassigned");
   const [loadingData, setLoadingData] = useState(true);
   const [assigning, setAssigning] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentOrder, setPaymentOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -83,9 +86,46 @@ export default function LogisticsOrdersPage() {
   };
 
   const handleAssignOrder = (order: Order) => {
+    // Verificar si la orden está pagada antes de permitir asignarla
+    if (order.payment_status !== "paid") {
+      setPaymentOrder(order);
+      setShowPaymentModal(true);
+      return;
+    }
+
     setSelectedOrder(order);
     setShowAssignModal(true);
     setDeliveryDate(order.delivery_date || "");
+  };
+
+  const handleConfirmPayment = async (paymentMethod: string) => {
+    if (!paymentOrder) return;
+
+    try {
+      // Actualizar el estatus de pago de la orden
+      await apiClient.logistics.updateOrderPayment(String(paymentOrder.id), {
+        payment_status: "paid",
+        payment_method: paymentMethod,
+        logistics_confirmed: false,
+      });
+
+      alert("Pago confirmado exitosamente");
+
+      // Actualizar la orden localmente
+      const updatedOrder = { ...paymentOrder, payment_status: "paid", payment_method: paymentMethod };
+
+      // Mostrar modal de asignación
+      setSelectedOrder(updatedOrder);
+      setShowAssignModal(true);
+      setDeliveryDate(updatedOrder.delivery_date || "");
+
+      setShowPaymentModal(false);
+      setPaymentOrder(null);
+      loadData();
+    } catch (error) {
+      console.error("Error confirming payment:", error);
+      throw error;
+    }
   };
 
   const handleViewDetails = (order: Order) => {
@@ -96,6 +136,15 @@ export default function LogisticsOrdersPage() {
   const handleConfirmAssign = async () => {
     if (!selectedOrder || !selectedBranch || !deliveryDate) {
       alert("Por favor completa todos los campos");
+      return;
+    }
+
+    // Verificar que la orden esté pagada antes de asignar
+    if (selectedOrder.payment_status !== "paid") {
+      alert("La orden debe estar pagada antes de asignarla a una sucursal");
+      setShowAssignModal(false);
+      setPaymentOrder(selectedOrder);
+      setShowPaymentModal(true);
       return;
     }
 
@@ -221,6 +270,18 @@ export default function LogisticsOrdersPage() {
         </div>
       </div>
 
+      {/* Payment Status Modal */}
+      {showPaymentModal && paymentOrder && (
+        <PaymentStatusModal
+          order={paymentOrder}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setPaymentOrder(null);
+          }}
+          onConfirm={handleConfirmPayment}
+        />
+      )}
+
       {/* Assign Modal */}
       {showAssignModal && selectedOrder && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -234,6 +295,20 @@ export default function LogisticsOrdersPage() {
                   {selectedOrder.order_number || selectedOrder.message_id || `#${selectedOrder.id}`}
                 </p>
               </div>
+
+              {selectedOrder.payment_status === "paid" && (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
+                    <CheckCircle size={16} />
+                    <span className="font-medium">Pago confirmado</span>
+                  </div>
+                  {selectedOrder.payment_method && (
+                    <p className="text-xs text-green-700 dark:text-green-300 mt-1 ml-6">
+                      Método: {selectedOrder.payment_method}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-300">Cliente</p>
@@ -672,6 +747,24 @@ function OrderCard({ order, onAssign, onViewDetails }: { order: Order; onAssign:
         )}
       </div>
 
+      {order.payment_status !== "paid" && (
+        <div className="mb-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-yellow-800 dark:text-yellow-200">
+            <AlertCircle size={14} />
+            <span className="font-medium">Pago pendiente</span>
+          </div>
+        </div>
+      )}
+
+      {order.payment_status === "paid" && order.payment_method && (
+        <div className="mb-3 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
+            <CheckCircle size={14} />
+            <span className="font-medium">Pagado - {order.payment_method}</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2">
         <button
           onClick={onViewDetails}
@@ -683,9 +776,20 @@ function OrderCard({ order, onAssign, onViewDetails }: { order: Order; onAssign:
         {!order.store_id || order.status === "pending_logistics" ? (
           <button
             onClick={onAssign}
-            className="flex-1 bg-primary hover:bg-primary-hover text-white py-2 rounded-lg transition-colors font-medium"
+            className={`flex-1 py-2 rounded-lg transition-colors font-medium flex items-center justify-center gap-2 ${
+              order.payment_status !== "paid"
+                ? "bg-yellow-600 hover:bg-yellow-700 text-white"
+                : "bg-primary hover:bg-primary-hover text-white"
+            }`}
           >
-            Asignar
+            {order.payment_status !== "paid" ? (
+              <>
+                <DollarSign size={16} />
+                Confirmar Pago
+              </>
+            ) : (
+              "Asignar"
+            )}
           </button>
         ) : (
           <div className="flex-1 text-center py-2 text-sm text-green-600 font-medium bg-green-50 rounded-lg">

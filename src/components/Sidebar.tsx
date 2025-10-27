@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSidebarStats, type SidebarStats } from "@/hooks/useSidebarStats";
 import {
   Home,
   Package,
@@ -47,7 +48,7 @@ interface MenuItem {
   divider?: boolean;
 }
 
-const getMenuItemsByRole = (role: string): MenuItem[] => {
+const getMenuItemsByRole = (role: string, stats?: SidebarStats): MenuItem[] => {
   // Normalizar el rol para manejar variantes en español/inglés
   const normalizedRole = role.toLowerCase().replace('logistica', 'logistics').replace('empleado', 'employee');
 
@@ -74,7 +75,7 @@ const getMenuItemsByRole = (role: string): MenuItem[] => {
         icon: Users,
         label: "Usuarios",
         href: "/dashboard/admin/users",
-        badge: "12"
+        badge: stats?.totalUsers ? String(stats.totalUsers) : undefined
       },
       {
         icon: Building2,
@@ -92,7 +93,7 @@ const getMenuItemsByRole = (role: string): MenuItem[] => {
         icon: Package,
         label: "Órdenes",
         href: "/dashboard/logistics/orders",
-        badge: "5",
+        badge: stats?.pendingOrders ? String(stats.pendingOrders) : undefined,
         badgeColor: "bg-orange-500"
       },
       {
@@ -104,18 +105,20 @@ const getMenuItemsByRole = (role: string): MenuItem[] => {
             icon: MessageCircle,
             label: "WhatsApp",
             href: "/dashboard/logistics/conversations?platform=whatsapp",
-            badge: "3",
+            badge: stats?.conversationsByPlatform?.whatsapp ? String(stats.conversationsByPlatform.whatsapp) : undefined,
             badgeColor: "bg-green-500"
           },
           {
             icon: Instagram,
             label: "Instagram",
-            href: "/dashboard/logistics/conversations?platform=instagram"
+            href: "/dashboard/logistics/conversations?platform=instagram",
+            badge: stats?.conversationsByPlatform?.instagram ? String(stats.conversationsByPlatform.instagram) : undefined
           },
           {
             icon: MessageSquare,
             label: "Messenger",
-            href: "/dashboard/logistics/conversations?platform=messenger"
+            href: "/dashboard/logistics/conversations?platform=messenger",
+            badge: stats?.conversationsByPlatform?.messenger ? String(stats.conversationsByPlatform.messenger) : undefined
           },
         ]
       },
@@ -157,26 +160,26 @@ const getMenuItemsByRole = (role: string): MenuItem[] => {
         icon: MessageSquare,
         label: "Conversaciones",
         href: "/dashboard/logistics/conversations",
-        badge: "8",
+        badge: stats?.totalConversations ? String(stats.totalConversations) : undefined,
         badgeColor: "bg-blue-500",
         submenu: [
           {
             icon: MessageCircle,
             label: "WhatsApp",
             href: "/dashboard/logistics/conversations?platform=whatsapp",
-            badge: "5"
+            badge: stats?.conversationsByPlatform?.whatsapp ? String(stats.conversationsByPlatform.whatsapp) : undefined
           },
           {
             icon: Instagram,
             label: "Instagram",
             href: "/dashboard/logistics/conversations?platform=instagram",
-            badge: "2"
+            badge: stats?.conversationsByPlatform?.instagram ? String(stats.conversationsByPlatform.instagram) : undefined
           },
           {
             icon: MessageSquare,
             label: "Messenger",
             href: "/dashboard/logistics/conversations?platform=messenger",
-            badge: "1"
+            badge: stats?.conversationsByPlatform?.messenger ? String(stats.conversationsByPlatform.messenger) : undefined
           },
         ]
       },
@@ -186,7 +189,7 @@ const getMenuItemsByRole = (role: string): MenuItem[] => {
         icon: ClipboardList,
         label: "Órdenes Pendientes",
         href: "/dashboard/logistics/orders",
-        badge: "12",
+        badge: stats?.pendingOrders ? String(stats.pendingOrders) : undefined,
         badgeColor: "bg-red-500"
       },
       {
@@ -219,7 +222,7 @@ const getMenuItemsByRole = (role: string): MenuItem[] => {
         icon: Package,
         label: "Mis Órdenes",
         href: "/dashboard/employee/orders",
-        badge: "3",
+        badge: stats?.pendingOrders ? String(stats.pendingOrders) : undefined,
         badgeColor: "bg-orange-500"
       },
       {
@@ -231,7 +234,7 @@ const getMenuItemsByRole = (role: string): MenuItem[] => {
         icon: Clock,
         label: "Pendientes",
         href: "/dashboard/employee/pending",
-        badge: "5"
+        badge: stats?.pendingOrders ? String(stats.pendingOrders) : undefined
       },
 
       { divider: true, label: "COMUNICACIÓN", href: "#" },
@@ -244,7 +247,7 @@ const getMenuItemsByRole = (role: string): MenuItem[] => {
         icon: Bell,
         label: "Notificaciones",
         href: "/dashboard/employee/notifications",
-        badge: "2",
+        badge: stats?.unreadConversations ? String(stats.unreadConversations) : undefined,
         badgeColor: "bg-red-500"
       },
 
@@ -317,9 +320,12 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
   const pathname = usePathname();
   const actualPath = currentPath || pathname;
 
+  // Get dynamic stats for sidebar badges
+  const { stats } = useSidebarStats(user?.role);
+
   const menuItems = useMemo(() => {
-    return user ? getMenuItemsByRole(user.role) : [];
-  }, [user]);
+    return user ? getMenuItemsByRole(user.role, stats) : [];
+  }, [user, stats]);
 
   // Auto-expand submenu if current path is inside it
   useEffect(() => {
@@ -527,11 +533,19 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
                   {user?.full_name || "Usuario"}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary mt-1">
-                  {user?.role === "logistica" ? "Logística" :
-                   user?.role === "empleado" ? "Empleado" :
-                   user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "Usuario"}
-                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
+                    {user?.role === "logistica" ? "Logística" :
+                     user?.role === "empleado" ? "Empleado" :
+                     user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "Usuario"}
+                  </span>
+                  {user?.branch && (user.role === "empleado" || user.role === "employee") && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 truncate max-w-[120px]" title={user.branch.name}>
+                      <Store size={10} className="mr-1 flex-shrink-0" />
+                      {user.branch.name}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 

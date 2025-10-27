@@ -45,6 +45,17 @@ export interface User {
   role: UserRole;
   full_name: string;
   branch_id?: string | null;
+  branch?: {
+    id: string;
+    name: string;
+    address: string;
+    phone: string;
+    city?: string;
+    state?: string;
+    manager_id?: string;
+    manager_name?: string;
+    active: boolean;
+  };
   permissions?: string[];
   active: boolean;
   created_at?: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Send, Paperclip, Image, Phone, Video, MoreVertical, ArrowLeft, Bot, User, UserCheck, RefreshCw } from "lucide-react";
+import { Send, Paperclip, Image, Phone, Video, MoreVertical, ArrowLeft, Bot, User, UserCheck, RefreshCw, ArrowDown } from "lucide-react";
 import type { Message, Conversation, MessageDirection } from "@/types/api";
 import apiClient from "@/lib/api-client";
 import { getMockMessages, simulateApiDelay } from "@/lib/mock-conversations";
@@ -18,7 +18,9 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const [sending, setSending] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,6 +47,22 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       };
     }
   }, [showMenu]);
+
+  // Detectar scroll para mostrar/ocultar botón de scroll
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Mostrar botón si no está en el fondo (con un margen de 100px)
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isNearBottom);
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const loadMessages = async () => {
     try {
@@ -441,7 +459,10 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900 relative"
+      >
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
@@ -479,6 +500,18 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-500 dark:text-gray-400">No hay mensajes en esta conversación</p>
           </div>
+        )}
+
+        {/* Botón de scroll hacia abajo - discreto */}
+        {showScrollButton && (
+          <button
+            onClick={scrollToBottom}
+            className="fixed bottom-24 right-8 bg-primary hover:bg-primary-hover text-white rounded-full p-3 shadow-lg transition-all duration-300 opacity-80 hover:opacity-100 z-10"
+            aria-label="Ir al final de la conversación"
+            title="Ir al final"
+          >
+            <ArrowDown size={20} />
+          </button>
         )}
       </div>
 

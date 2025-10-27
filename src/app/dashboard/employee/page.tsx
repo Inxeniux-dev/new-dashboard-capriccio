@@ -4,7 +4,7 @@ import { useRequireAuth } from "@/contexts/AuthContext";
 import {
   Package, CheckCircle, Clock, AlertCircle,
   Star, Award, Target, Coffee, Zap, ChevronRight, Filter,
-  Calendar, User
+  Calendar, User, Store
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -254,6 +254,17 @@ export default function EmployeeDashboardPage() {
             <p className="text-white/80">
               Tienes {performance.tasks_pending} tareas pendientes para hoy
             </p>
+            {/* Branch Information - DESTACADO */}
+            <div className="mt-3 inline-flex items-center gap-2 bg-white/20 backdrop-blur px-4 py-2 rounded-lg">
+              <Store size={18} />
+              <div>
+                <p className="text-xs text-white/70">Tu Sucursal</p>
+                <p className="font-bold">
+                  {(user as { branch?: { name: string } })?.branch?.name ||
+                   `Sucursal ${user?.branch_id || "No asignada"}`}
+                </p>
+              </div>
+            </div>
           </div>
           <div className="text-right">
             <div className="flex items-center gap-2 mb-2">

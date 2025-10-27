@@ -503,6 +503,20 @@ export const logisticsApi = {
   async getStores(): Promise<ApiResponse<Branch[]>> {
     return fetchApi<ApiResponse<Branch[]>>("/api/logistics/stores");
   },
+
+  async updateOrderPayment(
+    orderId: string,
+    data: {
+      payment_status: string;
+      payment_method: string;
+      logistics_confirmed?: boolean;
+    }
+  ): Promise<ApiResponse<Order>> {
+    return fetchApi<ApiResponse<Order>>(`/api/logistics/orders/${orderId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
 };
 
 // ============================================

@@ -15,7 +15,8 @@
       "Bash(done)",
       "Bash(git diff:*)",
       "Bash(ls:*)",
-      "Bash(NODE_ENV=production npm run build:*)"
+      "Bash(NODE_ENV=production npm run build:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
