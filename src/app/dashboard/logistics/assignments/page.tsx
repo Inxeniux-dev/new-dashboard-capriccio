@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
-import { Truck, Package, Building2, Clock, CheckCircle, XCircle, AlertCircle, ArrowRight, Eye, X, User, Phone, MapPin, ShoppingCart, Info, DollarSign, Store } from "lucide-react";
+import { Truck, Package, Building2, Clock, CheckCircle, XCircle, AlertCircle, ArrowRight, Eye, X, User, ShoppingCart, Info, DollarSign, Store } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import type { Order, Branch, OrderStatus } from "@/types/api";
 import PaymentStatusModal from "@/components/PaymentStatusModal";
@@ -193,12 +193,59 @@ export default function LogisticsAssignmentsPage() {
       setAssigning(true);
 
       // Intentar asignar usando el endpoint de órdenes
-      await apiClient.orders.assignToBranch(String(selectedOrder.id), {
+      const response = await apiClient.orders.assignToBranch(String(selectedOrder.id), {
         branch_id: selectedBranch,
         delivery_date: deliveryDate,
       });
 
-      alert("Orden asignada exitosamente");
+      console.log("🔍 DEBUG - Respuesta completa de asignación:", response);
+      console.log("🔍 DEBUG - response.data:", response.data);
+      console.log("🔍 DEBUG - response.ipos_sent:", (response as unknown as { ipos_sent?: boolean }).ipos_sent);
+      console.log("🔍 DEBUG - response.data?.ipos_sent:", response.data ? (response.data as Order & { ipos_sent?: boolean; ipos_order_id?: string }).ipos_sent : "no data");
+
+      // IMPORTANTE: El backend puede retornar en diferentes formatos:
+      // Formato 1: { success: true, data: Order, ipos_sent: true, ipos_order_id: "123" }
+      // Formato 2: { success: true, data: { ...Order, ipos_sent: true, ipos_order_id: "123" } }
+
+      // Intentar extraer ipos_sent de ambos niveles
+      let iposSent: boolean | undefined;
+      let iposOrderId: string | undefined;
+
+      // Primero verificar en el nivel raíz de response
+      if ('ipos_sent' in (response as unknown as Record<string, unknown>)) {
+        iposSent = (response as unknown as { ipos_sent?: boolean }).ipos_sent;
+        iposOrderId = (response as unknown as { ipos_order_id?: string }).ipos_order_id;
+        console.log("✅ ipos_sent encontrado en nivel raíz:", iposSent, "ID:", iposOrderId);
+      }
+      // Si no está en raíz, verificar en response.data
+      else if (response.data && typeof response.data === 'object') {
+        const dataObj = response.data as Order & { ipos_sent?: boolean; ipos_order_id?: string };
+        iposSent = dataObj.ipos_sent;
+        iposOrderId = dataObj.ipos_order_id;
+        console.log("✅ ipos_sent encontrado en data:", iposSent, "ID:", iposOrderId);
+      }
+
+      console.log("🎯 FINAL - iposSent:", iposSent, "- iposOrderId:", iposOrderId);
+
+      let message = "✅ Orden asignada exitosamente";
+
+      if (iposSent === true && iposOrderId) {
+        // ✅ ÉXITO - La orden fue enviada a iPOS
+        message += `\n\n📦 Orden enviada a iPOS\nTicket iPOS #${iposOrderId}`;
+      } else if (iposSent === false || iposSent === undefined) {
+        // ⚠️ ADVERTENCIA - La orden se asignó pero NO se envió a iPOS
+        message += "\n\n⚠️ La orden no fue enviada a iPOS automáticamente.";
+        // Verificar razones por las que no se envió
+        if (selectedOrder.payment_status !== "paid") {
+          message += "\nRazón: Pago no confirmado";
+        } else if (!deliveryDate) {
+          message += "\nRazón: Fecha de entrega no establecida";
+        } else {
+          message += "\nVerifica que todos los requisitos estén completos.";
+        }
+      }
+
+      alert(message);
       setShowAssignModal(false);
       setSelectedOrder(null);
       setSelectedBranch("");
@@ -228,6 +275,25 @@ export default function LogisticsAssignmentsPage() {
   const handleViewDetails = (order: Order) => {
     setDetailOrder(order);
     setShowDetailsModal(true);
+  };
+
+  // Función para parsear fecha de entrega sin problemas de zona horaria
+  // Convierte "YYYY-MM-DD" o "YYYY-MM-DDTHH:mm:ss" en fecha local
+  const parseDeliveryDate = (dateString: string): string => {
+    if (!dateString) return "";
+
+    // Extraer solo la parte de la fecha (YYYY-MM-DD)
+    const [datePart] = dateString.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+
+    // Crear fecha local (sin conversión de zona horaria)
+    const localDate = new Date(year, month - 1, day);
+
+    return localDate.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
   };
 
   if (loading || loadingData) {
@@ -735,7 +801,7 @@ export default function LogisticsAssignmentsPage() {
                   <div>
                     <span className="text-gray-600 dark:text-gray-300">Fecha de entrega:</span>
                     <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
-                      {new Date(detailOrder.delivery_date).toLocaleDateString("es-ES")}
+                      {parseDeliveryDate(detailOrder.delivery_date)}
                     </span>
                   </div>
                 )}

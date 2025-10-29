@@ -19,12 +19,16 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [resettingConversation, setResettingConversation] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [togglingAI, setTogglingAI] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadMessages();
+    loadAIStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversation.id]);
 
@@ -382,6 +386,86 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     }
   };
 
+  const handleResetConversation = async () => {
+    if (!confirm("¿Estás seguro de que deseas restablecer el estado de esta conversación? Esto enviará el menú principal al cliente.")) {
+      return;
+    }
+
+    try {
+      setResettingConversation(true);
+      setShowMenu(false);
+
+      // TODO: Cuando el backend implemente el endpoint, reemplazar esto con:
+      // await apiClient.conversations.resetState(conversation.platform, conversation.contact_id, "menu");
+
+      // Por ahora, simulamos el comportamiento
+      console.log("Resetting conversation state for:", {
+        platform: conversation.platform,
+        contact_id: conversation.contact_id
+      });
+
+      // Simulación temporal - remover cuando el endpoint esté listo
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      alert("⚠️ Función en desarrollo\n\nEl endpoint de backend aún no está implementado.\n\nSe ha agregado la solicitud al equipo de backend en BACKEND_REQUESTS.md\n\nCuando esté listo, este botón:\n✅ Restablecerá el estado de la conversación\n✅ Enviará el menú principal al cliente\n✅ Limpiará variables de sesión");
+
+      // Recargar mensajes para ver los cambios
+      await loadMessages();
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    } catch (error) {
+      console.error("Error resetting conversation:", error);
+      alert("Error al restablecer la conversación. Por favor intenta de nuevo.");
+    } finally {
+      setResettingConversation(false);
+    }
+  };
+
+  const loadAIStatus = async () => {
+    try {
+      const response = await apiClient.ai.getAIStatus(
+        conversation.platform,
+        conversation.contact_id
+      );
+      if (response.data?.ai_enabled !== undefined) {
+        setAiEnabled(response.data.ai_enabled);
+      }
+    } catch (error) {
+      console.error("Error loading AI status:", error);
+      // Si falla, asumir que está habilitado
+      setAiEnabled(true);
+    }
+  };
+
+  const toggleAI = async () => {
+    try {
+      setTogglingAI(true);
+      const newState = !aiEnabled;
+
+      await apiClient.ai.setAIControl(
+        conversation.platform,
+        conversation.contact_id,
+        newState
+      );
+
+      setAiEnabled(newState);
+
+      // Mostrar notificación
+      const message = newState
+        ? "✅ IA activada - El bot responderá automáticamente"
+        : "👤 Modo manual activado - Debes responder manualmente";
+
+      // En lugar de alert, podrías usar un toast notification
+      console.log(message);
+    } catch (error) {
+      console.error("Error toggling AI:", error);
+      alert("Error al cambiar el modo de IA. Por favor intenta de nuevo.");
+    } finally {
+      setTogglingAI(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg">
       {/* Header */}
@@ -408,6 +492,27 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Toggle IA/Manual */}
+          <button
+            onClick={toggleAI}
+            disabled={togglingAI}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+              aiEnabled
+                ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50"
+                : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
+            } disabled:opacity-50`}
+            title={aiEnabled ? "IA activa - Click para modo manual" : "Modo manual - Click para activar IA"}
+          >
+            {togglingAI ? (
+              <RefreshCw size={14} className="animate-spin" />
+            ) : aiEnabled ? (
+              <Bot size={14} />
+            ) : (
+              <User size={14} />
+            )}
+            <span>{aiEnabled ? "IA" : "Manual"}</span>
+          </button>
+
           <button className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors">
             <Phone size={18} className="text-gray-600 dark:text-gray-300" />
           </button>
@@ -424,7 +529,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
 
             {/* Dropdown Menu */}
             {showMenu && (
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-50">
+              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-50">
                 <button
                   onClick={handleRefreshConversation}
                   disabled={refreshing}
@@ -432,6 +537,18 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
                 >
                   <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
                   {refreshing ? "Actualizando..." : "Actualizar conversación"}
+                </button>
+
+                <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+
+                <button
+                  onClick={handleResetConversation}
+                  disabled={resettingConversation}
+                  className="w-full px-4 py-2 text-left text-sm text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 flex items-center gap-2 transition-colors disabled:opacity-50"
+                  title="Restablecer el estado de la conversación y enviar menú al cliente"
+                >
+                  <RefreshCw size={16} className={resettingConversation ? "animate-spin" : ""} />
+                  {resettingConversation ? "Restableciendo..." : "Resetear conversación"}
                 </button>
               </div>
             )}

@@ -133,6 +133,25 @@ export default function LogisticsOrdersPage() {
     setShowDetailsModal(true);
   };
 
+  // Función para parsear fecha de entrega sin problemas de zona horaria
+  // Convierte "YYYY-MM-DD" o "YYYY-MM-DDTHH:mm:ss" en fecha local
+  const parseDeliveryDate = (dateString: string): string => {
+    if (!dateString) return "";
+
+    // Extraer solo la parte de la fecha (YYYY-MM-DD)
+    const [datePart] = dateString.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+
+    // Crear fecha local (sin conversión de zona horaria)
+    const localDate = new Date(year, month - 1, day);
+
+    return localDate.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+  };
+
   const handleConfirmAssign = async () => {
     if (!selectedOrder || !selectedBranch || !deliveryDate) {
       alert("Por favor completa todos los campos");
@@ -662,7 +681,7 @@ export default function LogisticsOrdersPage() {
                   <div>
                     <span className="text-gray-600 dark:text-gray-300">Fecha de entrega:</span>
                     <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
-                      {new Date(detailOrder.delivery_date).toLocaleDateString("es-ES")}
+                      {parseDeliveryDate(detailOrder.delivery_date)}
                     </span>
                   </div>
                 )}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
-import { Calendar, Package, MapPin, Clock, ChevronLeft, ChevronRight, Filter, Truck, Eye, X, User, Phone, ShoppingCart, Info } from "lucide-react";
+import { Calendar, Package, MapPin, Clock, ChevronLeft, ChevronRight, Filter, Truck, Eye, X, User, ShoppingCart, Info } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import type { Order, Branch } from "@/types/api";
 

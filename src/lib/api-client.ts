@@ -585,6 +585,35 @@ export const aiApi = {
     );
   },
 
+  // Nuevo endpoint según especificaciones del backend
+  async setAIControl(
+    platform: string,
+    contactId: string,
+    aiEnabled: boolean
+  ): Promise<ApiResponse<{ ai_enabled: boolean; platform: string; contact_id: string }>> {
+    return fetchApi<ApiResponse<{ ai_enabled: boolean; platform: string; contact_id: string }>>(
+      "/api/conversations/ai-control",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          platform,
+          contactId,
+          ai_enabled: aiEnabled,
+        }),
+      }
+    );
+  },
+
+  // Nuevo endpoint para consultar estado de IA
+  async getAIStatus(
+    platform: string,
+    contactId: string
+  ): Promise<ApiResponse<{ ai_enabled: boolean; platform: string; contact_id: string }>> {
+    return fetchApi<ApiResponse<{ ai_enabled: boolean; platform: string; contact_id: string }>>(
+      `/api/conversations/ai-status?platform=${platform}&contactId=${contactId}`
+    );
+  },
+
   async getLogs(
     platform: string,
     params?: { limit?: number; offset?: number }

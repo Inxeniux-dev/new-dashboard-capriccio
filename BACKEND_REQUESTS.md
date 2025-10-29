@@ -1,4 +1,148 @@
-# Solicitudes de Ajustes al Backend - Módulo de Sucursales
+# Solicitudes de Ajustes al Backend
+
+---
+
+## 🆕 NUEVA SOLICITUD: Endpoint para Restablecer Estado de Conversación
+
+### Problema Identificado
+
+Cuando un usuario en WhatsApp se queda "atascado" sin ver el menú de opciones (por ejemplo, después de que el sistema envía el catálogo pero no muestra las opciones del menú), el agente humano necesita poder restablecer manualmente el estado de la conversación desde el dashboard.
+
+**Caso de Uso Real:**
+```
+Cliente: "Me gustaría hacer un pedido"
+Bot: [Envía catálogo y opciones]
+Cliente: "Qué productos tienes"
+Cliente: "Ver menu"
+[El bot no responde con el menú - CONVERSACIÓN ATASCADA]
+```
+
+### Endpoint Requerido
+
+#### **POST /api/conversations/:platform/:contactId/reset-state**
+
+o alternativamente:
+
+#### **POST /api/ai/reset-conversation-state**
+
+**Método:** `POST`
+
+**Headers:**
+```json
+{
+  "Authorization": "Bearer {token}",
+  "Content-Type": "application/json"
+}
+```
+
+**Request Body:**
+```json
+{
+  "platform": "whatsapp",
+  "contact_id": "52123456789",
+  "reset_type": "menu" // o "full" para resetear completamente
+}
+```
+
+**Response Exitosa (200):**
+```json
+{
+  "success": true,
+  "message": "Estado de conversación restablecido exitosamente",
+  "data": {
+    "platform": "whatsapp",
+    "contact_id": "52123456789",
+    "previous_state": "waiting_catalog_response",
+    "new_state": "menu",
+    "reset_at": "2025-10-27T17:21:00Z",
+    "reset_by": "user_logistica_123"
+  }
+}
+```
+
+**Response Error (404):**
+```json
+{
+  "success": false,
+  "error": "Conversación no encontrada",
+  "code": "CONVERSATION_NOT_FOUND"
+}
+```
+
+**Response Error (400):**
+```json
+{
+  "success": false,
+  "error": "Tipo de reset inválido",
+  "code": "INVALID_RESET_TYPE"
+}
+```
+
+### Funcionalidad Esperada
+
+1. **Limpiar el estado de la conversación** en la base de datos del bot IA
+2. **Restablecer el contexto** a "menu" (estado inicial)
+3. **Limpiar variables de sesión** del usuario (carrito temporal, selecciones anteriores, etc.)
+4. **Enviar automáticamente el menú** al usuario por WhatsApp
+5. **Registrar en logs** quién hizo el reset y cuándo
+
+### Tipos de Reset
+
+| Tipo | Descripción | Acción |
+|------|-------------|--------|
+| `menu` | Restablecer solo al menú principal | Limpia estado y muestra menú |
+| `full` | Reset completo | Limpia todo incluyendo historial de interacciones |
+| `cart` | Limpiar solo el carrito | Mantiene el estado pero vacía el carrito |
+
+### Integración en el Frontend
+
+El botón de reset se agregará en el módulo de Conversaciones (`/dashboard/logistics/conversations/[platform]/[contactId]`):
+
+```jsx
+// Ubicación: Header de la conversación, junto a los botones IA/Manual
+<button
+  onClick={handleResetConversation}
+  className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+  title="Restablecer estado de conversación"
+>
+  <RefreshCw size={18} />
+  Resetear Conversación
+</button>
+```
+
+### Campos Adicionales para el Modelo de Conversación
+
+Para trackear mejor estos eventos, sería útil agregar a la tabla de conversaciones:
+
+```json
+{
+  "conversation_state": "menu" | "browsing_catalog" | "adding_to_cart" | "checkout" | "waiting_payment",
+  "last_state_reset_at": "2025-10-27T17:21:00Z",
+  "last_state_reset_by": "user_logistica_123",
+  "state_reset_count": 3
+}
+```
+
+### Prioridad
+
+**🔴 ALTA** - Este problema afecta directamente la experiencia del cliente y requiere intervención manual actualmente.
+
+### Notas de Implementación
+
+1. El reset debe ser **atómico** - si falla el envío del menú, debe hacer rollback del estado
+2. Debe haber un **rate limit** para evitar spam (máximo 5 resets por conversación en 10 minutos)
+3. Debe **notificar al agente** en el dashboard cuando el reset se complete exitosamente
+4. Considerar agregar un **mensaje automático** al cliente tipo: "Te he enviado el menú principal nuevamente 📋"
+
+### Endpoints Relacionados (para contexto)
+
+- `GET /api/conversations/:platform/:contactId` - Obtener conversación actual
+- `POST /api/conversations/:platform/:contactId/messages` - Enviar mensaje
+- `PATCH /api/conversations/:platform/:contactId/mode` - Cambiar entre IA/Manual
+
+---
+
+## Solicitudes Anteriores - Módulo de Sucursales
 
 ## Estado Actual
 

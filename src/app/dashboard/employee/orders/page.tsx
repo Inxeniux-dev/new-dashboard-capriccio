@@ -52,6 +52,19 @@ export default function EmployeeOrdersPage() {
     setShowDetailsModal(true);
   };
 
+  // Función para parsear fecha de entrega sin problemas de zona horaria
+  const parseDeliveryDate = (dateString: string): string => {
+    if (!dateString) return "";
+    const [datePart] = dateString.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day);
+    return localDate.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; color: string }> = {
       pending: { label: "Pendiente", color: "bg-yellow-100 text-yellow-800" },
@@ -131,7 +144,7 @@ export default function EmployeeOrdersPage() {
                 {order.delivery_date && (
                   <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                     <Clock size={14} />
-                    <span>{new Date(order.delivery_date).toLocaleDateString("es-ES")}</span>
+                    <span>{parseDeliveryDate(order.delivery_date)}</span>
                   </div>
                 )}
                 {order.delivery_address && (
@@ -259,7 +272,7 @@ export default function EmployeeOrdersPage() {
                   <div>
                     <span className="text-gray-600 dark:text-gray-300">Fecha de entrega:</span>
                     <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
-                      {new Date(selectedOrder.delivery_date).toLocaleDateString("es-ES")}
+                      {parseDeliveryDate(selectedOrder.delivery_date)}
                     </span>
                   </div>
                 )}

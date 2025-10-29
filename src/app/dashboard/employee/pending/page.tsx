@@ -55,6 +55,19 @@ export default function EmployeePendingPage() {
     }
   };
 
+  // Función para parsear fecha de entrega sin problemas de zona horaria
+  const parseDeliveryDate = (dateString: string): string => {
+    if (!dateString) return "";
+    const [datePart] = dateString.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day);
+    return localDate.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+  };
+
   if (loading || loadingData) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -129,7 +142,7 @@ export default function EmployeePendingPage() {
                 {order.delivery_date && (
                   <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                     <Clock size={14} />
-                    <span>Entrega: {new Date(order.delivery_date).toLocaleDateString("es-ES")}</span>
+                    <span>Entrega: {parseDeliveryDate(order.delivery_date)}</span>
                   </div>
                 )}
                 {order.delivery_address && (

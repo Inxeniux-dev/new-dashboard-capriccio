@@ -18,6 +18,9 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   message?: string;
   timestamp?: string;
+  // Campos adicionales para órdenes enviadas a iPOS
+  ipos_sent?: boolean;
+  ipos_order_id?: string;
 }
 
 export interface ErrorResponse {
@@ -233,6 +236,7 @@ export interface Order {
   logistics_confirmed?: boolean;
   ipos_order_id?: string | null;
   ipos_status?: string | null;
+  ipos_sent?: boolean;
   created_at: string;
   updated_at: string;
   metadata?: Record<string, unknown>;
