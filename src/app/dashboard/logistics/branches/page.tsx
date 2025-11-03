@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
-import { Building2, MapPin, User, CheckCircle, XCircle, Package, TrendingUp } from "lucide-react";
+import { Building2, MapPin, User, CheckCircle, XCircle, Package, TrendingUp, Info, ExternalLink } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import type { Order, Branch } from "@/types/api";
 
@@ -97,7 +97,30 @@ export default function LogisticsBranchesPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Sucursales</h1>
-          <p className="text-gray-600 dark:text-gray-300">Gestión y estadísticas de sucursales</p>
+          <p className="text-gray-600 dark:text-gray-300">Vista y estadísticas de sucursales</p>
+        </div>
+      </div>
+
+      {/* Mensaje Informativo */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex items-start gap-3">
+        <Info className="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" size={20} />
+        <div className="flex-1">
+          <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-1">
+            Información de Sucursales desde iPOS
+          </h3>
+          <p className="text-blue-700 dark:text-blue-300 text-sm">
+            Las sucursales mostradas aquí son sincronizadas automáticamente desde el sistema iPOS.
+            Para gestionar sucursales (agregar, editar o eliminar), debe hacerlo desde el portal de iPOS.
+          </p>
+          <a
+            href="https://ipos.capriccio.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 mt-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium transition-colors"
+          >
+            Ir al portal de iPOS
+            <ExternalLink size={14} />
+          </a>
         </div>
       </div>
 

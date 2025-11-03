@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
-import { MapPin, Phone, Edit2, Trash2, Plus, User } from "lucide-react";
+import { MapPin, Phone, User, Info, ExternalLink } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import type { Branch } from "@/types/api";
 
@@ -10,17 +10,6 @@ export default function BranchesManagementPage() {
   const { loading } = useRequireAuth(["admin"]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loadingData, setLoadingData] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    address: "",
-    phone: "",
-    city: "",
-    state: "",
-    manager_id: "",
-  });
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadBranches();
@@ -35,90 +24,6 @@ export default function BranchesManagementPage() {
       console.error("Error loading branches:", error);
     } finally {
       setLoadingData(false);
-    }
-  };
-
-  const handleOpenModal = (branch?: Branch) => {
-    if (branch) {
-      setEditingBranch(branch);
-      setFormData({
-        name: branch.name,
-        address: branch.address,
-        phone: branch.phone,
-        city: branch.city || "",
-        state: branch.state || "",
-        manager_id: branch.manager_id || "",
-      });
-    } else {
-      setEditingBranch(null);
-      setFormData({
-        name: "",
-        address: "",
-        phone: "",
-        city: "",
-        state: "",
-        manager_id: "",
-      });
-    }
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingBranch(null);
-    setFormData({
-      name: "",
-      address: "",
-      phone: "",
-      city: "",
-      state: "",
-      manager_id: "",
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.name || !formData.address || !formData.phone) {
-      alert("Por favor completa los campos obligatorios");
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      if (editingBranch) {
-        // Actualizar sucursal existente
-        await apiClient.branches.update(editingBranch.id, formData);
-        alert("Sucursal actualizada exitosamente");
-      } else {
-        // Crear nueva sucursal
-        await apiClient.branches.create(formData);
-        alert("Sucursal creada exitosamente");
-      }
-
-      handleCloseModal();
-      loadBranches();
-    } catch (error) {
-      console.error("Error saving branch:", error);
-      alert("Error al guardar la sucursal");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async (branchId: string) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar esta sucursal?")) {
-      return;
-    }
-
-    try {
-      await apiClient.branches.delete(branchId);
-      alert("Sucursal eliminada exitosamente");
-      loadBranches();
-    } catch (error) {
-      console.error("Error deleting branch:", error);
-      alert("Error al eliminar la sucursal");
     }
   };
 
@@ -138,16 +43,32 @@ export default function BranchesManagementPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Gestión de Sucursales</h1>
-          <p className="text-gray-600 dark:text-gray-300">Administra las sucursales del sistema</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Sucursales</h1>
+          <p className="text-gray-600 dark:text-gray-300">Vista de sucursales sincronizadas desde iPOS</p>
         </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
-        >
-          <Plus size={20} />
-          Nueva Sucursal
-        </button>
+      </div>
+
+      {/* Mensaje Informativo */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex items-start gap-3">
+        <Info className="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" size={20} />
+        <div className="flex-1">
+          <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-1">
+            Gestión de Sucursales desde iPOS
+          </h3>
+          <p className="text-blue-700 dark:text-blue-300 text-sm">
+            Las sucursales mostradas aquí son sincronizadas automáticamente desde el sistema iPOS.
+            Para agregar, editar o eliminar sucursales, debe hacerlo directamente desde el portal de iPOS.
+          </p>
+          <a
+            href="https://ipos.capriccio.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 mt-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium transition-colors"
+          >
+            Ir al portal de iPOS
+            <ExternalLink size={14} />
+          </a>
+        </div>
       </div>
 
       {/* Branches Grid */}
@@ -157,126 +78,24 @@ export default function BranchesManagementPage() {
             <BranchCard
               key={branch.id}
               branch={branch}
-              onEdit={() => handleOpenModal(branch)}
-              onDelete={() => handleDelete(branch.id)}
             />
           ))
         ) : (
           <div className="col-span-full text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-md">
             <MapPin className="text-gray-300 dark:text-gray-600 mx-auto mb-4" size={64} />
-            <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">No hay sucursales registradas</p>
-            <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Crea la primera sucursal para comenzar</p>
+            <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">No hay sucursales disponibles</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Las sucursales se sincronizan desde iPOS</p>
           </div>
         )}
       </div>
-
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full p-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
-              {editingBranch ? "Editar Sucursal" : "Nueva Sucursal"}
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                  Nombre *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                  Dirección *
-                </label>
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                    Ciudad
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                    Estado
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.state}
-                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                  Teléfono *
-                </label>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-                  required
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  disabled={saving}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50"
-                  disabled={saving}
-                >
-                  {saving ? "Guardando..." : editingBranch ? "Actualizar" : "Crear"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
 function BranchCard({
   branch,
-  onEdit,
-  onDelete,
 }: {
   branch: Branch;
-  onEdit: () => void;
-  onDelete: () => void;
 }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
@@ -284,22 +103,6 @@ function BranchCard({
         <div>
           <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{branch.name}</h3>
           <StatusBadge active={branch.active} />
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={onEdit}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            title="Editar"
-          >
-            <Edit2 size={18} className="text-gray-600 dark:text-gray-300" />
-          </button>
-          <button
-            onClick={onDelete}
-            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-            title="Eliminar"
-          >
-            <Trash2 size={18} className="text-red-600" />
-          </button>
         </div>
       </div>
 

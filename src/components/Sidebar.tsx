@@ -29,7 +29,8 @@ import {
   TrendingUp,
   Clock,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -50,7 +51,13 @@ interface MenuItem {
 
 const getMenuItemsByRole = (role: string, stats?: SidebarStats): MenuItem[] => {
   // Normalizar el rol para manejar variantes en español/inglés
-  const normalizedRole = role.toLowerCase().replace('logistica', 'logistics').replace('empleado', 'employee');
+  const normalizedRole = role.toLowerCase()
+    .replace('administrador', 'admin')  // Agregar esta línea para convertir "administrador" a "admin"
+    .replace('logistica', 'logistics')
+    .replace('empleado', 'employee');
+
+  // Debug: verificar qué rol se está usando
+  console.log('🔍 [Sidebar Debug] Original role:', role, '| Normalized role:', normalizedRole);
 
   // Dashboard principal según el rol
   const dashboardPath = {
@@ -125,15 +132,14 @@ const getMenuItemsByRole = (role: string, stats?: SidebarStats): MenuItem[] => {
 
       { divider: true, label: "ANÁLISIS", href: "#" },
       {
+        icon: Sparkles,
+        label: "Reportes Ejecutivos",
+        href: "/dashboard/admin/reports"
+      },
+      {
         icon: BarChart3,
-        label: "Reportes",
-        href: "/dashboard/admin/reports",
-        submenu: [
-          { icon: TrendingUp, label: "Ventas", href: "/dashboard/admin/reports/sales" },
-          { icon: Users, label: "Clientes", href: "/dashboard/admin/reports/customers" },
-          { icon: Package, label: "Productos", href: "/dashboard/admin/reports/products" },
-          { icon: Building2, label: "Por Sucursal", href: "/dashboard/admin/reports/branches" },
-        ]
+        label: "Estadísticas",
+        href: "/dashboard/admin/stats"
       },
       {
         icon: FileText,
@@ -226,6 +232,11 @@ const getMenuItemsByRole = (role: string, stats?: SidebarStats): MenuItem[] => {
         badgeColor: "bg-orange-500"
       },
       {
+        icon: Calendar,
+        label: "Calendario",
+        href: "/dashboard/employee/calendar"
+      },
+      {
         icon: PackageCheck,
         label: "Completadas",
         href: "/dashboard/employee/completed"
@@ -238,11 +249,6 @@ const getMenuItemsByRole = (role: string, stats?: SidebarStats): MenuItem[] => {
       },
 
       { divider: true, label: "COMUNICACIÓN", href: "#" },
-      {
-        icon: MessageSquare,
-        label: "Chat con Clientes",
-        href: "/dashboard/employee/chat"
-      },
       {
         icon: Bell,
         label: "Notificaciones",
@@ -324,7 +330,9 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
   const { stats } = useSidebarStats(user?.role);
 
   const menuItems = useMemo(() => {
-    return user ? getMenuItemsByRole(user.role, stats) : [];
+    const items = user ? getMenuItemsByRole(user.role, stats) : [];
+    console.log('📋 [Sidebar] Generated menu items count:', items.length, 'for role:', user?.role);
+    return items;
   }, [user, stats]);
 
   // Auto-expand submenu if current path is inside it
@@ -359,8 +367,8 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
               </div>
             </div>
           ) : (
-            <div className="bg-gradient-to-br from-primary to-secondary text-white w-11 h-11 rounded-xl flex items-center justify-center shadow-lg mx-auto">
-              <span className="font-bold text-lg">C</span>
+            <div className="text-primary w-11 h-11 flex items-center justify-center mx-auto">
+              <span className="font-bold text-3xl">C</span>
             </div>
           )}
 
@@ -419,16 +427,13 @@ export default function Sidebar({ currentPath = "/dashboard" }: SidebarProps) {
                   }
                 }}
                 className={clsx(
-                  "w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg transition-all duration-200 group relative",
+                  "w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg transition-all duration-200 group",
                   isActive
                     ? "bg-primary text-white shadow-md"
                     : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95",
                   isCollapsed && "justify-center px-2"
                 )}
               >
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-lg" />
-                )}
 
                 <Icon
                   size={20}

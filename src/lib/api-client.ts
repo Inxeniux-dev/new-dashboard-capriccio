@@ -24,6 +24,11 @@ import type {
   AIConfig,
   AILog,
   Notification,
+  QuickStatsResponse,
+  ExecutiveReportResponse,
+  TopProductsResponse,
+  Platform,
+  ReportPreset,
 } from "@/types/api";
 
 // ============================================
@@ -716,6 +721,130 @@ export const notificationsApi = {
 };
 
 // ============================================
+// REPORTES EJECUTIVOS
+// ============================================
+
+export const reportsApi = {
+  /**
+   * Obtiene estadísticas rápidas para un periodo específico
+   * @param days - Número de días hacia atrás (1-30)
+   * @param platform - Plataforma opcional para filtrar
+   */
+  async getQuickStats(
+    days: number = 7,
+    platform?: Platform | null
+  ): Promise<QuickStatsResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.set("days", days.toString());
+    if (platform) {
+      searchParams.set("platform", platform);
+    }
+
+    return fetchApi<QuickStatsResponse>(
+      `/api/reports/quick-stats?${searchParams.toString()}`
+    );
+  },
+
+  /**
+   * Obtiene reporte ejecutivo completo con análisis de IA
+   * @param startDate - Fecha inicio (YYYY-MM-DD)
+   * @param endDate - Fecha fin (YYYY-MM-DD)
+   * @param platform - Plataforma opcional
+   * @param includeAIAnalysis - Incluir análisis de IA (default: true)
+   */
+  async getExecutiveReport(
+    startDate: string,
+    endDate: string,
+    platform?: Platform | null,
+    includeAIAnalysis: boolean = true
+  ): Promise<ExecutiveReportResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.set("startDate", startDate);
+    searchParams.set("endDate", endDate);
+    if (platform) {
+      searchParams.set("platform", platform);
+    }
+    searchParams.set("includeAIAnalysis", includeAIAnalysis.toString());
+
+    return fetchApi<ExecutiveReportResponse>(
+      `/api/reports/executive?${searchParams.toString()}`
+    );
+  },
+
+  /**
+   * Obtiene reporte usando un preset predefinido
+   * @param preset - Preset de periodo (today, this-week, this-month, etc.)
+   * @param platform - Plataforma opcional
+   * @param includeAIAnalysis - Incluir análisis de IA (default: true)
+   */
+  async getPresetReport(
+    preset: ReportPreset,
+    platform?: Platform | null,
+    includeAIAnalysis: boolean = true
+  ): Promise<ExecutiveReportResponse> {
+    const searchParams = new URLSearchParams();
+    if (platform) {
+      searchParams.set("platform", platform);
+    }
+    searchParams.set("includeAIAnalysis", includeAIAnalysis.toString());
+
+    const query = searchParams.toString();
+    return fetchApi<ExecutiveReportResponse>(
+      `/api/reports/presets/${preset}${query ? `?${query}` : ""}`
+    );
+  },
+
+  /**
+   * Obtiene reporte usando un rango de fechas personalizado
+   * @param startDate - Fecha de inicio (formato YYYY-MM-DD)
+   * @param endDate - Fecha de fin (formato YYYY-MM-DD)
+   * @param platform - Plataforma opcional
+   * @param includeAIAnalysis - Incluir análisis de IA (default: true)
+   */
+  async getCustomReport(
+    startDate: string,
+    endDate: string,
+    platform?: Platform | null,
+    includeAIAnalysis: boolean = true
+  ): Promise<ExecutiveReportResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.set("startDate", startDate);
+    searchParams.set("endDate", endDate);
+    if (platform) {
+      searchParams.set("platform", platform);
+    }
+    searchParams.set("includeAIAnalysis", includeAIAnalysis.toString());
+
+    const query = searchParams.toString();
+    // Usar el endpoint de presets con "custom" y parámetros de fecha
+    return fetchApi<ExecutiveReportResponse>(
+      `/api/reports/presets/custom${query ? `?${query}` : ""}`
+    );
+  },
+
+  /**
+   * Obtiene productos más vendidos
+   * @param startDate - Fecha inicio (YYYY-MM-DD)
+   * @param endDate - Fecha fin (YYYY-MM-DD)
+   * @param limit - Número de productos (1-50, default: 10)
+   */
+  async getTopProducts(
+    startDate: string,
+    endDate: string,
+    limit: number = 10
+  ): Promise<TopProductsResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.set("startDate", startDate);
+    searchParams.set("endDate", endDate);
+    searchParams.set("limit", limit.toString());
+
+    return fetchApi<TopProductsResponse>(
+      `/api/reports/products/top?${searchParams.toString()}`
+    );
+  },
+};
+
+// ============================================
 // EXPORT DEFAULT
 // ============================================
 
@@ -732,6 +861,7 @@ const apiClient = {
   ai: aiApi,
   ipos: iposApi,
   notifications: notificationsApi,
+  reports: reportsApi,
 };
 
 export default apiClient;

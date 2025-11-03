@@ -151,6 +151,7 @@ export function useAuth() {
 function getDashboardByRole(role: string): string {
   switch (role) {
     case "admin":
+    case "administrador":  // Agregar soporte para rol "administrador"
       return "/dashboard/admin";
     case "logistics":
     case "logistica":
@@ -175,7 +176,17 @@ export function useRequireAuth(requiredRoles?: string[]) {
       if (!isAuthenticated) {
         router.push("/");
       } else if (requiredRoles && user) {
-        const hasRequiredRole = requiredRoles.includes(user.role);
+        // Normalizar el rol del usuario para comparación
+        const normalizedUserRole = user.role.toLowerCase()
+          .replace('administrador', 'admin')
+          .replace('logistica', 'logistics')
+          .replace('empleado', 'employee');
+
+        // Verificar si el rol normalizado está en los roles requeridos
+        const hasRequiredRole = requiredRoles.some(role =>
+          role.toLowerCase() === normalizedUserRole || role === user.role
+        );
+
         if (!hasRequiredRole) {
           // Redirigir al dashboard correcto según su rol
           const dashboard = getDashboardByRole(user.role);

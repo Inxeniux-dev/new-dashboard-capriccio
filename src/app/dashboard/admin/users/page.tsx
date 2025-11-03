@@ -2,9 +2,78 @@
 
 import { useState, useEffect } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
-import { User as UserIcon, Mail, Shield, Edit2, Trash2, Plus, Building } from "lucide-react";
+import { User as UserIcon, Mail, Shield, Edit2, Trash2, Plus, Building, AlertCircle } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import type { User, Branch } from "@/types/api";
+
+// Datos de ejemplo para cuando el backend no esté disponible
+const getMockUsers = (): User[] => [
+  {
+    id: "mock-1",
+    email: "admin@capriccio.com",
+    full_name: "Administrador Principal",
+    role: "admin",
+    branch_id: null,
+    active: true,
+    created_at: new Date().toISOString(),
+    permissions: ["all"],
+  },
+  {
+    id: "mock-2",
+    email: "logistics@capriccio.com",
+    full_name: "Coordinador Logística",
+    role: "logistics",
+    branch_id: null,
+    active: true,
+    created_at: new Date().toISOString(),
+    permissions: ["manage_orders"],
+  },
+  {
+    id: "mock-3",
+    email: "empleado1@capriccio.com",
+    full_name: "María García",
+    role: "empleado",
+    branch_id: "branch-1",
+    active: true,
+    created_at: new Date().toISOString(),
+    permissions: ["view_orders"],
+  },
+  {
+    id: "mock-4",
+    email: "manager1@capriccio.com",
+    full_name: "Carlos López",
+    role: "manager",
+    branch_id: "branch-1",
+    active: true,
+    created_at: new Date().toISOString(),
+    permissions: ["manage_branch"],
+  },
+];
+
+const getMockBranches = (): Branch[] => [
+  {
+    id: "branch-1",
+    name: "Tienda Central",
+    address: "Av. Principal #123",
+    city: "León",
+    state: "Guanajuato",
+    phone: "477-123-4567",
+    active: true,
+    created_at: "2024-01-01T00:00:00.000Z",
+    updated_at: "2024-01-01T00:00:00.000Z",
+  },
+  {
+    id: "branch-2",
+    name: "Tienda Norte",
+    address: "Blvd. Norte #456",
+    city: "León",
+    state: "Guanajuato",
+    phone: "477-234-5678",
+    active: true,
+    created_at: "2024-01-01T00:00:00.000Z",
+    updated_at: "2024-01-01T00:00:00.000Z",
+  },
+];
 
 export default function UsersManagementPage() {
   const { loading } = useRequireAuth(["admin"]);
@@ -13,6 +82,7 @@ export default function UsersManagementPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -29,16 +99,31 @@ export default function UsersManagementPage() {
   const loadData = async () => {
     try {
       setLoadingData(true);
+      setApiError(null);
 
       // Cargar usuarios
-      const usersResponse = await apiClient.users.getAll();
-      setUsers(usersResponse.data || []);
+      try {
+        const usersResponse = await apiClient.users.getAll();
+        setUsers(usersResponse.data || []);
+      } catch (error) {
+        console.error("Error loading users:", error);
+        // Usar datos de ejemplo si el API falla
+        setUsers(getMockUsers());
+        setApiError("No se pudieron cargar los usuarios del servidor. Mostrando datos de ejemplo.");
+      }
 
       // Cargar sucursales
-      const branchesResponse = await apiClient.branches.getAll();
-      setBranches(branchesResponse.data || []);
+      try {
+        const branchesResponse = await apiClient.branches.getAll();
+        setBranches(branchesResponse.data || []);
+      } catch (error) {
+        console.error("Error loading branches:", error);
+        // Usar sucursales de ejemplo si el API falla
+        setBranches(getMockBranches());
+      }
     } catch (error) {
       console.error("Error loading data:", error);
+      setApiError("Error al cargar los datos. Por favor, verifica tu conexión.");
     } finally {
       setLoadingData(false);
     }
@@ -82,6 +167,12 @@ export default function UsersManagementPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Si hay error de API, no permitir guardar
+    if (apiError) {
+      alert("No se puede guardar mientras el backend no esté disponible");
+      return;
+    }
+
     if (!formData.email || !formData.role) {
       alert("Por favor completa los campos obligatorios");
       return;
@@ -122,13 +213,19 @@ export default function UsersManagementPage() {
       loadData();
     } catch (error) {
       console.error("Error saving user:", error);
-      alert("Error al guardar el usuario");
+      alert("Error al guardar el usuario. El backend podría no estar disponible.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (userId: string) => {
+    // Si hay error de API, no permitir eliminar
+    if (apiError) {
+      alert("No se puede eliminar mientras el backend no esté disponible");
+      return;
+    }
+
     if (!confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
       return;
     }
@@ -139,7 +236,7 @@ export default function UsersManagementPage() {
       loadData();
     } catch (error) {
       console.error("Error deleting user:", error);
-      alert("Error al eliminar el usuario");
+      alert("Error al eliminar el usuario. El backend podría no estar disponible.");
     }
   };
 
@@ -165,11 +262,30 @@ export default function UsersManagementPage() {
         <button
           onClick={() => handleOpenModal()}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+          disabled={apiError !== null}
         >
           <Plus size={20} />
           Nuevo Usuario
         </button>
       </div>
+
+      {/* Mensaje de error/advertencia */}
+      {apiError && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle className="text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" size={20} />
+          <div className="flex-1">
+            <h3 className="font-semibold text-amber-900 dark:text-amber-200 mb-1">
+              Modo de demostración
+            </h3>
+            <p className="text-amber-700 dark:text-amber-300 text-sm">
+              {apiError}
+            </p>
+            <p className="text-amber-600 dark:text-amber-400 text-xs mt-1">
+              Las funciones de crear, editar y eliminar están deshabilitadas hasta que el backend esté disponible.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Users Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">

@@ -422,3 +422,109 @@ export interface Notification {
   link?: string;
   created_at: string;
 }
+
+// ============================================
+// REPORTES EJECUTIVOS
+// ============================================
+
+export type ReportPreset =
+  | "today"
+  | "yesterday"
+  | "this-week"
+  | "last-week"
+  | "this-month"
+  | "last-month"
+  | "this-quarter"
+  | "this-year";
+
+export interface ReportPeriod {
+  startDate: string;
+  endDate: string;
+  days: number;
+}
+
+export interface QuickStatsMetrics {
+  totalRevenue: number;
+  averageOrderValue: number;
+  totalOrders: number;
+  completedOrders: number;
+  pendingOrders: number;
+  conversionRate: string;
+  totalMessages: number;
+  messagesPerContact: string;
+  newContacts: number;
+  paidOrders: number;
+  paymentRate: string;
+  topPlatform: Platform | "todas";
+  preferredDeliveryMethod: string;
+}
+
+export interface QuickStatsResponse {
+  success: boolean;
+  period: ReportPeriod;
+  platform: Platform | "todas";
+  metrics: QuickStatsMetrics;
+  generatedAt: string;
+}
+
+export interface OrdersBreakdown {
+  total: number;
+  byStatus: Record<string, number>;
+  byPaymentStatus: {
+    paid: number;
+    pending: number;
+  };
+  byPlatform: Record<string, number>;
+  byDeliveryMethod: Record<string, number>;
+}
+
+export interface ConversationsBreakdown {
+  totalMessages: number;
+  byPlatform: Record<string, number>;
+}
+
+export interface ContactsBreakdown {
+  newContacts: number;
+  byPlatform: Record<string, number>;
+}
+
+export interface AIAnalysis {
+  fullAnalysis: string;
+  summary: string;
+  insights: string;
+  recommendations: string;
+  trends: string;
+  risks: string;
+}
+
+export interface ExecutiveReport {
+  period: ReportPeriod;
+  platform: Platform | "todas";
+  metrics: QuickStatsMetrics;
+  orders: OrdersBreakdown;
+  conversations: ConversationsBreakdown;
+  contacts: ContactsBreakdown;
+  aiAnalysis?: AIAnalysis;
+}
+
+export interface ExecutiveReportResponse {
+  success: boolean;
+  report: ExecutiveReport;
+}
+
+export interface TopProduct {
+  productId: string;
+  productName: string;
+  unitsSold: number;
+  revenue: number;
+}
+
+export interface TopProductsResponse {
+  success: boolean;
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  topProducts: TopProduct[];
+  count: number;
+}

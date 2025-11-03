@@ -478,42 +478,152 @@ Cuatro tarjetas muestran:
 
 ## 2. Mis Órdenes
 
-**[📸 CAPTURA: Página de mis órdenes]**
+**[📸 CAPTURA: Página de mis órdenes con vista Kanban]**
 
 **Ubicación:** Sidebar → Mis Órdenes
 
-Aquí verás todas las órdenes asignadas a tu sucursal.
+Aquí verás todas las órdenes asignadas a tu sucursal con dos vistas disponibles.
 
-### 2.1 Filtros Disponibles
+### 2.1 Cambiar Vista
 
-**[📸 CAPTURA: Dropdown de filtro de estados]**
+**[📸 CAPTURA: Toggle de vista Kanban/Cuadrícula]**
 
-Puedes filtrar por:
-- 📋 Todas
-- 🆕 Asignadas (nuevas)
-- 🔄 En Proceso
-- ✅ Completadas
+En la parte superior derecha encontrarás dos botones para cambiar la vista:
 
-### 2.2 Información de cada Orden
+- **📊 Vista Kanban**: Organización visual por columnas de estado (predeterminada)
+- **🔲 Vista Cuadrícula**: Vista tradicional de tarjetas en cuadrícula
 
-**[📸 CAPTURA: Tarjeta de orden con todos los datos]**
+### 2.2 Vista Kanban (Recomendada)
 
-Cada tarjeta muestra:
+**[📸 CAPTURA: Tablero Kanban completo con 4 columnas]**
+
+La vista Kanban organiza tus órdenes en 4 columnas visuales:
+
+**Columnas Disponibles:**
+
+1. **🟡 Pendientes** (Naranja)
+   - Órdenes con estado "Pendiente" y "Asignada"
+   - Órdenes que necesitan ser iniciadas
+
+2. **🔵 En Proceso** (Azul)
+   - Órdenes actualmente en preparación
+   - Órdenes que estás trabajando
+
+3. **🟢 Completadas** (Verde)
+   - Órdenes finalizadas exitosamente
+   - Historial reciente de completadas
+
+4. **🔴 Canceladas** (Rojo)
+   - Órdenes que fueron canceladas
+   - Registros de cancelaciones
+
+**[📸 CAPTURA: Contador de órdenes en encabezado de columna]**
+
+Cada columna muestra:
+- Icono representativo del estado
+- Nombre del estado
+- **Contador de órdenes** en badge blanco
+
+### 2.3 Tarjetas de Orden en Kanban
+
+**[📸 CAPTURA: Tarjeta de orden individual en Kanban]**
+
+Cada tarjeta de orden muestra:
+
+**Información Principal:**
+- 📦 **Número de orden** (ej: #12345)
+- 👤 **Nombre del cliente**
+- 📱 **Teléfono** de contacto
+- 📅 **Fecha de entrega**
+- 📍 **Dirección** de entrega
+- 🛍️ **Cantidad de productos**
+- 💰 **Total de la orden**
+
+**Indicadores Especiales:**
+
+**[📸 CAPTURA: Orden marcada como URGENTE]**
+
+- ⚠️ **URGENTE**: Las órdenes con entrega el mismo día o al día siguiente tienen:
+  - Banner rojo con texto "URGENTE - Entrega Próxima"
+  - Anillo rojo alrededor de la tarjeta
+  - Icono de estrella brillante
+
+**Acciones:**
+- 👁️ **Ver Detalle**: Botón con gradiente del color de la columna
+- Hover animado que resalta la tarjeta
+
+### 2.4 Vista Cuadrícula
+
+**[📸 CAPTURA: Vista de cuadrícula tradicional]**
+
+Vista alternativa con tarjetas organizadas en grid:
+
+**Características:**
+- Diseño de 3 columnas en pantallas grandes
+- 2 columnas en tablets
+- 1 columna en móviles
+- Badge de estado en cada tarjeta
+- Mismo nivel de información que Kanban
+
+### 2.5 Estadísticas Rápidas
+
+**[📸 CAPTURA: Tarjetas de estadísticas en el header]**
+
+En el header superior verás 4 tarjetas con métricas en tiempo real:
+
+1. **Pendientes**: Órdenes que necesitan iniciarse
+2. **En Proceso**: Órdenes actualmente en trabajo
+3. **Completadas**: Órdenes finalizadas
+4. **Total**: Total de órdenes asignadas a tu sucursal
+
+### 2.6 Ver Detalles de una Orden
+
+**[📸 CAPTURA: Modal de detalles de orden completo]**
+
+Al hacer clic en **"Ver Detalle"** en cualquier orden, se abre un modal con:
+
+**Header:**
 - Número de orden
-- Nombre del cliente
-- Teléfono de contacto
-- Fecha de entrega
-- Dirección de entrega (resumida)
-- Total a pagar
-- Estado actual
+- Estado con badge de color
 
-### 2.3 Acciones sobre Órdenes
+**Información del Cliente:**
+- Nombre completo
+- Teléfono
+- Email (si disponible)
+- Dirección de entrega completa
 
-**[📸 CAPTURA: Botones de acción en tarjeta de orden]**
+**Información de la Orden:**
+- Fecha de entrega completa
+- Sucursal asignada
+- Fecha de creación
+- Método de pago
 
-- 👁️ **Ver Detalle**: Información completa de la orden
-- ▶️ **Iniciar**: Cambiar estado a "En Proceso" (solo en asignadas)
-- ✅ **Completar**: Marcar como completada (solo en proceso)
+**Lista de Productos Detallada:**
+
+Cada producto se muestra en una tarjeta individual con:
+- **Icono del producto** con color primario
+- **Nombre del producto** destacado
+- **Detalles organizados:**
+  - Cantidad (ej: "3 unidades")
+  - Precio unitario (ej: "$25.00")
+  - ID del producto (si está disponible)
+- **Notas del producto** (si existen)
+  - Aparecen en un recuadro ámbar
+  - Útil para especificaciones especiales
+- **Subtotal** del producto destacado a la derecha
+
+**Resumen de Productos:**
+- Total de unidades solicitadas al final de la lista
+
+**Notas (si existen):**
+- Notas del cliente
+- Notas de logística
+
+**Total:**
+- Total de la orden destacado
+
+**Botón de Cierre:**
+- Botón gris para cerrar el modal
 
 ---
 

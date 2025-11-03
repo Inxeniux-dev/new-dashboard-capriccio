@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
-import { Package, Eye, Clock, MapPin, User, Phone, X, ShoppingCart, Info } from "lucide-react";
+import { LayoutGrid, Columns3, Store, Package, Phone, Clock, MapPin, Eye } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import type { Order } from "@/types/api";
+import KanbanBoard from "@/components/KanbanBoard";
+import OrderDetailsModal from "@/components/OrderDetailsModal";
 
 export default function EmployeeOrdersPage() {
   const { user, loading } = useRequireAuth(["empleado", "employee"]);
@@ -12,14 +14,14 @@ export default function EmployeeOrdersPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"kanban" | "grid">("kanban");
 
   useEffect(() => {
     if (user?.branch_id) {
       loadOrders();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, filterStatus]);
+  }, [user]);
 
   const loadOrders = async () => {
     try {
@@ -32,13 +34,7 @@ export default function EmployeeOrdersPage() {
         limit: 100
       });
 
-      let ordersData = response.data || [];
-
-      // Filtrar por estado si es necesario
-      if (filterStatus !== "all") {
-        ordersData = ordersData.filter(o => o.status === filterStatus);
-      }
-
+      const ordersData = response.data || [];
       setOrders(ordersData);
     } catch (error) {
       console.error("Error loading orders:", error);
@@ -52,34 +48,9 @@ export default function EmployeeOrdersPage() {
     setShowDetailsModal(true);
   };
 
-  // Función para parsear fecha de entrega sin problemas de zona horaria
-  const parseDeliveryDate = (dateString: string): string => {
-    if (!dateString) return "";
-    const [datePart] = dateString.split('T');
-    const [year, month, day] = datePart.split('-').map(Number);
-    const localDate = new Date(year, month - 1, day);
-    return localDate.toLocaleDateString("es-ES", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric"
-    });
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; color: string }> = {
-      pending: { label: "Pendiente", color: "bg-yellow-100 text-yellow-800" },
-      assigned: { label: "Asignada", color: "bg-blue-100 text-blue-800" },
-      in_progress: { label: "En Proceso", color: "bg-indigo-100 text-indigo-800" },
-      completed: { label: "Completada", color: "bg-green-100 text-green-800" },
-      cancelled: { label: "Cancelada", color: "bg-red-100 text-red-800" },
-    };
-
-    const config = statusConfig[status] || statusConfig.pending;
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${config.color}`}>
-        {config.label}
-      </span>
-    );
+  const handleCloseModal = () => {
+    setShowDetailsModal(false);
+    setSelectedOrder(null);
   };
 
   if (loading || loadingData) {
@@ -94,209 +65,199 @@ export default function EmployeeOrdersPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Mis Órdenes</h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Órdenes asignadas a {user?.branch?.name || "tu sucursal"}
-          </p>
-        </div>
-
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700"
-        >
-          <option value="all">Todas</option>
-          <option value="assigned">Asignadas</option>
-          <option value="in_progress">En Proceso</option>
-          <option value="completed">Completadas</option>
-        </select>
-      </div>
-
-      {/* Orders Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {orders.length > 0 ? (
-          orders.map((order) => (
-            <div
-              key={order.id}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex justify-between items-start mb-4">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Header - Fixed */}
+      <div className="flex-shrink-0 p-6 pb-0">
+        <div className="bg-gradient-to-r from-primary to-primary-hover text-white rounded-xl p-6 shadow-lg">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold mb-2">Mis Órdenes</h1>
+              <div className="flex items-center gap-2 bg-white/20 backdrop-blur px-4 py-2 rounded-lg w-fit">
+                <Store size={18} />
                 <div>
-                  <p className="font-bold text-lg text-gray-800 dark:text-gray-100">
-                    {order.order_number || `#${order.id}`}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {order.customer_name || "Cliente"}
+                  <p className="text-xs text-white/70">Tu Sucursal</p>
+                  <p className="font-bold">
+                    {user?.branch?.name || `Sucursal ${user?.branch_id || "No asignada"}`}
                   </p>
                 </div>
-                {getStatusBadge(order.status)}
-              </div>
-
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                  <Phone size={14} />
-                  <span>{order.customer_phone}</span>
-                </div>
-                {order.delivery_date && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                    <Clock size={14} />
-                    <span>{parseDeliveryDate(order.delivery_date)}</span>
-                  </div>
-                )}
-                {order.delivery_address && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                    <MapPin size={14} />
-                    <span className="truncate">{order.delivery_address}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
-                <span className="text-lg font-bold text-primary">
-                  ${order.total_amount.toFixed(2)}
-                </span>
-                <button
-                  onClick={() => handleViewDetails(order)}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
-                >
-                  <Eye size={16} />
-                  Ver Detalle
-                </button>
               </div>
             </div>
-          ))
-        ) : (
-          <div className="col-span-full text-center py-12">
-            <Package className="text-gray-300 dark:text-gray-600 mx-auto mb-4" size={64} />
-            <p className="text-gray-500 dark:text-gray-400 text-lg">No hay órdenes {filterStatus !== "all" ? filterStatus : ""}</p>
+
+            {/* View Mode Toggle */}
+            <div className="flex gap-2 bg-white/20 backdrop-blur rounded-lg p-1">
+              <button
+                onClick={() => setViewMode("kanban")}
+                className={`px-4 py-2 rounded-md transition-all flex items-center gap-2 ${
+                  viewMode === "kanban"
+                    ? "bg-white text-primary shadow-md"
+                    : "text-white hover:bg-white/10"
+                }`}
+              >
+                <Columns3 size={18} />
+                <span className="font-medium">Kanban</span>
+              </button>
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`px-4 py-2 rounded-md transition-all flex items-center gap-2 ${
+                  viewMode === "grid"
+                    ? "bg-white text-primary shadow-md"
+                    : "text-white hover:bg-white/10"
+                }`}
+              >
+                <LayoutGrid size={18} />
+                <span className="font-medium">Cuadrícula</span>
+              </button>
+            </div>
           </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+            <div className="bg-white/20 backdrop-blur rounded-lg p-3">
+              <p className="text-xs text-white/80 mb-1">Pendientes</p>
+              <p className="text-2xl font-bold">
+                {orders.filter(o => o.status === "pending" || o.status === "assigned").length}
+              </p>
+            </div>
+            <div className="bg-white/20 backdrop-blur rounded-lg p-3">
+              <p className="text-xs text-white/80 mb-1">En Proceso</p>
+              <p className="text-2xl font-bold">
+                {orders.filter(o => o.status === "in_progress").length}
+              </p>
+            </div>
+            <div className="bg-white/20 backdrop-blur rounded-lg p-3">
+              <p className="text-xs text-white/80 mb-1">Completadas</p>
+              <p className="text-2xl font-bold">
+                {orders.filter(o => o.status === "completed").length}
+              </p>
+            </div>
+            <div className="bg-white/20 backdrop-blur rounded-lg p-3">
+              <p className="text-xs text-white/80 mb-1">Total</p>
+              <p className="text-2xl font-bold">{orders.length}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Area - Scrollable */}
+      <div className="flex-1 p-6 min-h-0">
+        {viewMode === "kanban" ? (
+          <KanbanBoard
+            orders={orders}
+            onViewDetails={handleViewDetails}
+            loading={loadingData}
+          />
+        ) : (
+          <GridView orders={orders} onViewDetails={handleViewDetails} />
         )}
       </div>
 
       {/* Order Details Modal */}
-      {showDetailsModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Detalle de la Orden</h2>
-                <p className="text-gray-600 dark:text-gray-300">
-                  {selectedOrder.order_number || `#${selectedOrder.id}`}
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setShowDetailsModal(false);
-                  setSelectedOrder(null);
-                }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
+      {showDetailsModal && (
+        <OrderDetailsModal
+          order={selectedOrder}
+          onClose={handleCloseModal}
+        />
+      )}
+    </div>
+  );
+}
 
-            {/* Customer Information */}
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
-              <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2 flex items-center gap-2">
-                <User size={18} />
-                Información del Cliente
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div>
-                  <span className="text-gray-600 dark:text-gray-300">Nombre:</span>
-                  <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
-                    {selectedOrder.customer_name || "No especificado"}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-600 dark:text-gray-300">Teléfono:</span>
-                  <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
-                    {selectedOrder.customer_phone}
-                  </span>
-                </div>
-                {selectedOrder.delivery_address && (
-                  <div className="col-span-2">
-                    <span className="text-gray-600 dark:text-gray-300">Dirección:</span>
-                    <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
-                      {selectedOrder.delivery_address}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
+// Grid View Component
+function GridView({ orders, onViewDetails }: { orders: Order[]; onViewDetails: (order: Order) => void }) {
+  const parseDeliveryDate = (dateString: string): string => {
+    if (!dateString) return "";
+    const [datePart] = dateString.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day);
+    return localDate.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+  };
 
-            {/* Products */}
-            <div className="mb-4">
-              <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
-                <ShoppingCart size={18} />
-                Productos ({selectedOrder.items?.length || selectedOrder.products?.length || 0})
-              </h3>
-              <div className="space-y-2">
-                {((selectedOrder.items || selectedOrder.products || []) as Array<{product_name?: string; name?: string; quantity?: number; unit_price?: number; price?: number}>).map((item, index: number) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-800 dark:text-gray-100">
-                        {item.product_name || item.name || "Producto"}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Cantidad: {item.quantity || 1}
-                      </p>
-                    </div>
-                    <span className="font-bold text-gray-800 dark:text-gray-100">
-                      ${((item.unit_price || item.price || 0) * (item.quantity || 1)).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; color: string }> = {
+      pending: { label: "Pendiente", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" },
+      assigned: { label: "Asignada", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" },
+      in_progress: { label: "En Proceso", color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200" },
+      completed: { label: "Completada", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" },
+      cancelled: { label: "Cancelada", color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" },
+    };
 
-            {/* Order Info */}
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
-              <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2 flex items-center gap-2">
-                <Info size={18} />
-                Información de la Orden
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div>
-                  <span className="text-gray-600 dark:text-gray-300">Estado:</span>
-                  <span className="ml-2">{getStatusBadge(selectedOrder.status)}</span>
-                </div>
-                {selectedOrder.delivery_date && (
-                  <div>
-                    <span className="text-gray-600 dark:text-gray-300">Fecha de entrega:</span>
-                    <span className="ml-2 font-medium text-gray-800 dark:text-gray-100">
-                      {parseDeliveryDate(selectedOrder.delivery_date)}
-                    </span>
-                  </div>
-                )}
-                <div className="col-span-2">
-                  <span className="text-gray-600 dark:text-gray-300">Total:</span>
-                  <span className="ml-2 text-xl font-bold text-primary">
-                    ${selectedOrder.total_amount.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            </div>
+    const config = statusConfig[status] || statusConfig.pending;
+    return (
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${config.color}`}>
+        {config.label}
+      </span>
+    );
+  };
 
+  if (orders.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-xl px-8">
+          <Package className="text-gray-300 dark:text-gray-600 mx-auto mb-4" size={64} />
+          <p className="text-gray-500 dark:text-gray-400 text-lg">No hay órdenes disponibles</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {orders.map((order) => (
+        <div
+          key={order.id}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-primary"
+        >
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="font-bold text-lg text-gray-800 dark:text-gray-100">
+                {order.order_number || `#${order.id}`}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {order.customer_name || "Cliente"}
+              </p>
+            </div>
+            {getStatusBadge(order.status)}
+          </div>
+
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <Phone className="w-4 h-4" />
+              <span>{order.customer_phone}</span>
+            </div>
+            {order.delivery_date && (
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <Clock className="w-4 h-4" />
+                <span>{parseDeliveryDate(order.delivery_date)}</span>
+              </div>
+            )}
+            {order.delivery_address && (
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <MapPin className="w-4 h-4" />
+                <span className="truncate">{order.delivery_address}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
+            <span className="text-lg font-bold text-primary">
+              ${order.total_amount.toFixed(2)}
+            </span>
             <button
-              onClick={() => {
-                setShowDetailsModal(false);
-                setSelectedOrder(null);
-              }}
-              className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              onClick={() => onViewDetails(order)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
             >
-              Cerrar
+              <Eye className="w-4 h-4" />
+              Ver Detalle
             </button>
           </div>
         </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }

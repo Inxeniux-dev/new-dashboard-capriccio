@@ -243,9 +243,9 @@ export default function EmployeeDashboardPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-primary to-primary-hover text-white rounded-xl p-6">
+      <div className="bg-primary text-white rounded-xl p-6 shadow-lg">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold mb-2">
@@ -446,7 +446,7 @@ export default function EmployeeDashboardPage() {
           </div>
 
           {/* Tips */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-xl p-6">
+          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
             <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">💡 Consejo del Día</h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">
               Organiza tus tareas por prioridad al inicio del día para maximizar tu productividad.
