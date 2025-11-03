@@ -21,7 +21,6 @@ import {
   ClipboardList,
   Calendar,
   Bell,
-  FileText,
   Bot,
   Shield,
   Store,
@@ -135,16 +134,6 @@ const getMenuItemsByRole = (role: string, stats?: SidebarStats): MenuItem[] => {
         icon: Sparkles,
         label: "Reportes Ejecutivos",
         href: "/dashboard/admin/reports"
-      },
-      {
-        icon: BarChart3,
-        label: "Estadísticas",
-        href: "/dashboard/admin/stats"
-      },
-      {
-        icon: FileText,
-        label: "Logs del Sistema",
-        href: "/dashboard/admin/logs"
       },
 
       { divider: true, label: "CONFIGURACIÓN", href: "#" },
