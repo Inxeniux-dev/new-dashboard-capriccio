@@ -88,9 +88,57 @@ async function fetchApi<T>(
 
       // Manejar errores de autenticación (401)
       if (response.status === 401 && typeof window !== "undefined") {
-        // Token inválido o expirado - cerrar sesión automáticamente
-        console.warn("Token inválido o expirado. Cerrando sesión...");
+        // Token inválido o expirado - intentar renovar con refresh token
+        const refreshToken = localStorage.getItem("refresh_token");
+
+        if (refreshToken && !endpoint.includes("/auth/refresh")) {
+          try {
+            console.log("🔄 Intentando renovar token...");
+
+            // Intentar renovar el token
+            const refreshResponse = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ refresh_token: refreshToken }),
+            });
+
+            if (refreshResponse.ok) {
+              const refreshData = await refreshResponse.json();
+
+              if (refreshData.success && refreshData.data?.token) {
+                // Guardar nuevo token
+                localStorage.setItem("auth_token", refreshData.data.token);
+                if (refreshData.data.expires_at) {
+                  localStorage.setItem("token_expires_at", refreshData.data.expires_at);
+                }
+
+                console.log("✅ Token renovado exitosamente");
+
+                // Reintentar la petición original con el nuevo token
+                const newHeaders = new Headers(options?.headers || {});
+                newHeaders.set("Authorization", `Bearer ${refreshData.data.token}`);
+
+                const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
+                  ...options,
+                  headers: newHeaders,
+                });
+
+                const retryData = await retryResponse.json();
+                return retryData as T;
+              }
+            }
+          } catch (refreshError) {
+            console.error("❌ Error al renovar token:", refreshError);
+          }
+        }
+
+        // Si no se pudo renovar o no hay refresh token, cerrar sesión
+        console.warn("🚪 Token expirado. Cerrando sesión...");
         localStorage.removeItem("auth_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("token_expires_at");
         localStorage.removeItem("user");
 
         // Redirigir al login solo si no estamos ya en la página de login
@@ -98,9 +146,8 @@ async function fetchApi<T>(
           window.location.href = "/";
         }
 
-        // No lanzar el error después de manejar la redirección
-        // Retornar una promesa rechazada silenciosa que se puede ignorar
-        return Promise.reject(new ApiError(401, "Sesión expirada - redirigiendo", "auth_redirect")) as Promise<T>;
+        // Retornar promesa rechazada
+        return Promise.reject(new ApiError(401, "Sesión expirada", "auth_redirect")) as Promise<T>;
       }
 
       throw new ApiError(

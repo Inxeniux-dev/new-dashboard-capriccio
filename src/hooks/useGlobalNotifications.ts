@@ -29,7 +29,7 @@ export function useGlobalNotifications(userRole: string = 'agent'): UseGlobalNot
       filter = `type=in.(new_conversation,order_status,human_assistance_required)`;
     }
 
-    // Suscribirse a nuevas notificaciones
+    // Suscribirse a nuevas notificaciones (solo si hay conexión)
     const channel = supabase
       .channel('global-notifications')
       .on(
@@ -41,11 +41,17 @@ export function useGlobalNotifications(userRole: string = 'agent'): UseGlobalNot
           ...(filter && { filter })
         },
         (payload) => {
-          console.log('🔔 Nueva notificación global:', payload.new);
-          handleNewNotification(payload.new as Notification);
+          if (payload?.new) {
+            console.log('🔔 Nueva notificación global:', payload.new);
+            handleNewNotification(payload.new as Notification);
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.warn('Error en suscripción de notificaciones globales');
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -63,14 +69,20 @@ export function useGlobalNotifications(userRole: string = 'agent'): UseGlobalNot
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
-
-      if (data) {
+      if (error) {
+        console.warn('Error loading notifications from Supabase:', error.message);
+        // Si la tabla no existe o hay un error, usar un array vacío
+        setNotifications([]);
+        setUnreadCount(0);
+      } else if (data) {
         setNotifications(data);
         setUnreadCount(data.length);
       }
     } catch (err) {
-      console.error('Error loading notifications:', err);
+      console.warn('Error in fetchNotifications:', err);
+      // En caso de error, inicializar con valores vacíos
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setIsLoading(false);
     }

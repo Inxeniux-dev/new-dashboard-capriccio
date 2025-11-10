@@ -130,8 +130,12 @@ export default function AdminDashboardPage() {
       try {
         const conversationsResponse = await apiClient.conversations.getStats();
         conversationStats = conversationsResponse.data || null;
-      } catch (err) {
-        console.error("Error loading conversations:", err);
+      } catch (err: unknown) {
+        const error = err as { status?: number; details?: string };
+        // Si es error 401, el AuthContext ya manejará la redirección
+        if (error.status !== 401 && error.details !== "auth_redirect") {
+          console.error("Error loading conversations:", err);
+        }
         conversationStats = { active_conversations: 8 };
       }
 
@@ -140,8 +144,12 @@ export default function AdminDashboardPage() {
       try {
         const branchesResponse = await apiClient.logistics.getStores();
         branchesData = branchesResponse.data || [];
-      } catch (err) {
-        console.error("Error loading branches:", err);
+      } catch (err: unknown) {
+        const error = err as { status?: number; details?: string };
+        // Si es error 401, el AuthContext ya manejará la redirección
+        if (error.status !== 401 && error.details !== "auth_redirect") {
+          console.error("Error loading branches:", err);
+        }
         branchesData = getMockBranches();
       }
 
@@ -164,10 +172,16 @@ export default function AdminDashboardPage() {
       const completedOrders = orders.filter(o => o.status === "completed").length;
       const conversionRate = orders.length > 0 ? (completedOrders / orders.length) * 100 : 0;
 
+      // Contar órdenes pendientes (sin asignar a sucursal)
+      // Una orden está pendiente si no tiene store_id o branch_id, o tiene estado "pending_logistics"
+      const pendingOrders = orders.filter((o) =>
+        !o.store_id && !o.branch_id || o.status === "pending_logistics"
+      ).length;
+
       // Actualizar estadísticas
       setStats({
         totalOrders: orders.length,
-        pendingOrders: orders.filter((o) => o.status === "pending" || o.status === "unassigned").length,
+        pendingOrders,
         totalUsers: 12,
         activeConversations: conversationStats?.active_conversations || 8,
         totalRevenue,

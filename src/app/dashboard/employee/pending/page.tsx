@@ -5,6 +5,7 @@ import { useRequireAuth } from "@/contexts/AuthContext";
 import { Clock, Eye, MapPin, Phone, ArrowRight, X, ShoppingCart, User } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import type { Order } from "@/types/api";
+import { toast } from 'sonner';
 
 export default function EmployeePendingPage() {
   const { user, loading } = useRequireAuth(["empleado", "employee"]);
@@ -47,11 +48,11 @@ export default function EmployeePendingPage() {
       await apiClient.orders.updateStatus(String(orderId), {
         status: newStatus as "pending" | "assigned" | "in_progress" | "completed" | "cancelled",
       });
-      alert(`Estado actualizado a: ${newStatus === "in_progress" ? "En Proceso" : "Completada"}`);
+      toast.success(`Estado actualizado a: ${newStatus === "in_progress" ? "En Proceso" : "Completada"}`);
       loadPendingOrders();
     } catch (error) {
       console.error("Error updating status:", error);
-      alert("Error al actualizar el estado");
+      toast.error("Error al actualizar el estado");
     }
   };
 
@@ -199,7 +200,7 @@ export default function EmployeePendingPage() {
 
       {/* Order Details Modal */}
       {showDetailsModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex justify-between items-start mb-4">
               <div>

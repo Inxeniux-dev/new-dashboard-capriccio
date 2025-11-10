@@ -147,7 +147,17 @@ export default function RealtimeConversationsPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Conversations List */}
         <div className="w-1/3 border-r overflow-y-auto bg-gray-50 dark:bg-gray-900">
-          <RealtimeConversationsDashboard />
+          <RealtimeConversationsDashboard
+            onSelectConversation={(conv) => {
+              // Generar un ID único para la conversación basado en el teléfono
+              const conversationId = `conv-${conv.user_identifier.replace(/\+/g, '')}`;
+              setSelectedConversation({
+                id: conversationId,
+                phone: conv.user_identifier
+              });
+            }}
+            selectedPhone={selectedConversation?.phone}
+          />
         </div>
 
         {/* Chat Window */}
@@ -157,6 +167,7 @@ export default function RealtimeConversationsPage() {
               conversationId={selectedConversation.id}
               userPhone={selectedConversation.phone}
               onSendMessage={handleSendMessage}
+              onClose={() => setSelectedConversation(null)}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">

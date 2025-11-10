@@ -5,6 +5,7 @@ import { Send, Paperclip, Image, Phone, Video, MoreVertical, ArrowLeft, Bot, Use
 import type { Message, Conversation, MessageDirection } from "@/types/api";
 import apiClient from "@/lib/api-client";
 import { getMockMessages, simulateApiDelay } from "@/lib/mock-conversations";
+import { toast } from 'sonner';
 
 interface ChatWindowProps {
   conversation: Conversation;
@@ -344,7 +345,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       setTimeout(() => loadMessages(), 500);
     } catch (error) {
       console.error("Error sending message:", error);
-      alert("Error al enviar el mensaje");
+      toast.error("Error al enviar el mensaje");
     } finally {
       setSending(false);
     }
@@ -407,7 +408,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       // Simulación temporal - remover cuando el endpoint esté listo
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      alert("⚠️ Función en desarrollo\n\nEl endpoint de backend aún no está implementado.\n\nSe ha agregado la solicitud al equipo de backend en BACKEND_REQUESTS.md\n\nCuando esté listo, este botón:\n✅ Restablecerá el estado de la conversación\n✅ Enviará el menú principal al cliente\n✅ Limpiará variables de sesión");
+      toast.error("⚠️ Función en desarrollo\n\nEl endpoint de backend aún no está implementado.\n\nSe ha agregado la solicitud al equipo de backend en BACKEND_REQUESTS.md\n\nCuando esté listo, este botón:\n✅ Restablecerá el estado de la conversación\n✅ Enviará el menú principal al cliente\n✅ Limpiará variables de sesión");
 
       // Recargar mensajes para ver los cambios
       await loadMessages();
@@ -416,7 +417,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       }, 100);
     } catch (error) {
       console.error("Error resetting conversation:", error);
-      alert("Error al restablecer la conversación. Por favor intenta de nuevo.");
+      toast.error("Error al restablecer la conversación. Por favor intenta de nuevo.");
     } finally {
       setResettingConversation(false);
     }
@@ -456,11 +457,15 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         ? "✅ IA activada - El bot responderá automáticamente"
         : "👤 Modo manual activado - Debes responder manualmente";
 
-      // En lugar de alert, podrías usar un toast notification
-      console.log(message);
+      // Mostrar notificación toast
+      if (newState) {
+        toast.success("IA activada - El bot responderá automáticamente");
+      } else {
+        toast.success("Modo manual activado - Debes responder manualmente");
+      }
     } catch (error) {
       console.error("Error toggling AI:", error);
-      alert("Error al cambiar el modo de IA. Por favor intenta de nuevo.");
+      toast.error("Error al cambiar el modo de IA. Por favor intenta de nuevo.");
     } finally {
       setTogglingAI(false);
     }

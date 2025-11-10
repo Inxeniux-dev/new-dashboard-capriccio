@@ -14,13 +14,21 @@ interface ConversationCardProps {
   conversation: ConversationWithLastMessage;
   statusIndicator: typeof STATUS_INDICATORS[ConversationStatus];
   onClick?: () => void;
+  isSelected?: boolean;
 }
 
-function ConversationCard({ conversation, statusIndicator, onClick }: ConversationCardProps) {
+function ConversationCard({ conversation, statusIndicator, onClick, isSelected = false }: ConversationCardProps) {
+  // Asegurar que siempre tengamos un indicador válido
+  const safeIndicator = statusIndicator || STATUS_INDICATORS['menu_principal'];
+
   return (
     <div
       onClick={onClick}
-      className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-gray-200 dark:border-gray-700"
+      className={`p-4 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border ${
+        isSelected
+          ? 'bg-primary/10 border-primary shadow-md'
+          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+      }`}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center space-x-2">
@@ -29,10 +37,12 @@ function ConversationCard({ conversation, statusIndicator, onClick }: Conversati
             {conversation.user_identifier}
           </span>
         </div>
-        <div className={`px-2 py-1 rounded-full text-xs ${statusIndicator.bgColor} ${statusIndicator.textColor}`}>
-          <span className="mr-1">{statusIndicator.icon}</span>
-          {statusIndicator.text}
-        </div>
+        {safeIndicator && (
+          <div className={`px-2 py-1 rounded-full text-xs ${safeIndicator.bgColor} ${safeIndicator.textColor}`}>
+            <span className="mr-1">{safeIndicator.icon}</span>
+            {safeIndicator.text}
+          </div>
+        )}
       </div>
 
       {conversation.last_message && (
@@ -63,7 +73,15 @@ function ConversationCard({ conversation, statusIndicator, onClick }: Conversati
   );
 }
 
-export function RealtimeConversationsDashboard() {
+interface RealtimeConversationsDashboardProps {
+  onSelectConversation?: (conversation: ConversationWithLastMessage) => void;
+  selectedPhone?: string;
+}
+
+export function RealtimeConversationsDashboard({
+  onSelectConversation,
+  selectedPhone
+}: RealtimeConversationsDashboardProps = {}) {
   const [conversations, setConversations] = useState<ConversationWithLastMessage[]>([]);
   const [filter, setFilter] = useState<'all' | ConversationStatus>('all');
   const [isLoading, setIsLoading] = useState(true);
@@ -134,17 +152,30 @@ export function RealtimeConversationsDashboard() {
         // Cargar último mensaje para cada conversación
         const conversationsWithMessages = await Promise.all(
           data.map(async (conv) => {
-            const { data: messages } = await supabase
+            // Asegurar que el número tenga el formato correcto
+            const cleanPhone = conv.user_identifier?.startsWith('+')
+              ? conv.user_identifier
+              : `+${conv.user_identifier}`;
+
+            const { data: messages, error: msgError } = await supabase
               .from('messages')
-              .select('message_content')
-              .or(`sender_phone.eq.${conv.user_identifier},receiver_phone.eq.${conv.user_identifier}`)
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .single();
+              .select('message_content, timestamp')
+              .or(`from_number.eq.${cleanPhone},to_number.eq.${cleanPhone}`)
+              .eq('platform', 'whatsapp')
+              .order('timestamp', { ascending: false })
+              .limit(1);
+
+            // No usar .single() porque puede no haber mensajes
+            const lastMessage = messages && messages.length > 0 ? messages[0] : null;
 
             return {
               ...conv,
-              last_message: messages?.message_content
+              last_message: lastMessage?.message_content || null,
+              // Actualizar last_interaction si hay un mensaje más reciente
+              last_interaction: lastMessage?.timestamp &&
+                new Date(lastMessage.timestamp) > new Date(conv.last_interaction)
+                ? lastMessage.timestamp
+                : conv.last_interaction
             };
           })
         );
@@ -161,20 +192,27 @@ export function RealtimeConversationsDashboard() {
   function updateConversationInList(payload: { eventType: string; new?: ConversationState; old?: ConversationState }) {
     if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
       setConversations(prev => {
+        let updated = prev;
         if (payload.new) {
           const existing = prev.find(c => c.id === payload.new!.id);
           if (existing) {
-            return prev.map(conv =>
+            updated = prev.map(conv =>
               conv.id === payload.new!.id
                 ? { ...conv, ...payload.new }
                 : conv
             );
           } else {
-            // Nueva conversación
-            return [payload.new as ConversationWithLastMessage, ...prev];
+            // Nueva conversación - agregar al principio
+            updated = [payload.new as ConversationWithLastMessage, ...prev];
           }
         }
-        return prev;
+
+        // Re-ordenar por última interacción (más reciente primero)
+        return updated.sort((a, b) => {
+          const dateA = new Date(a.last_interaction).getTime();
+          const dateB = new Date(b.last_interaction).getTime();
+          return dateB - dateA;
+        });
       });
     } else if (payload.eventType === 'DELETE') {
       if (payload.old) {
@@ -184,12 +222,14 @@ export function RealtimeConversationsDashboard() {
   }
 
   function updateLastMessage(newMessage: Message) {
-    setConversations(prev =>
-      prev.map(conv => {
-        if (
-          conv.user_identifier === newMessage.sender_phone ||
-          conv.user_identifier === newMessage.receiver_phone
-        ) {
+    setConversations(prev => {
+      // Actualizar la conversación con el nuevo mensaje
+      const updated = prev.map(conv => {
+        // Los mensajes usan sender_phone y receiver_phone
+        const from = newMessage.sender_phone;
+        const to = newMessage.receiver_phone;
+
+        if (conv.user_identifier === from || conv.user_identifier === to) {
           return {
             ...conv,
             last_message: newMessage.message_content,
@@ -200,8 +240,15 @@ export function RealtimeConversationsDashboard() {
           };
         }
         return conv;
-      })
-    );
+      });
+
+      // Re-ordenar las conversaciones por última interacción (más reciente primero)
+      return updated.sort((a, b) => {
+        const dateA = new Date(a.last_interaction).getTime();
+        const dateB = new Date(b.last_interaction).getTime();
+        return dateB - dateA; // Orden descendente
+      });
+    });
   }
 
   // Contar conversaciones por estado
@@ -267,17 +314,28 @@ export function RealtimeConversationsDashboard() {
             No hay conversaciones {filter !== 'all' && `en estado "${STATUS_INDICATORS[filter].text}"`}
           </div>
         ) : (
-          filteredConversations.map(conv => (
-            <ConversationCard
-              key={conv.id}
-              conversation={conv}
-              statusIndicator={STATUS_INDICATORS[conv.current_status as ConversationStatus]}
-              onClick={() => {
-                // Aquí puedes navegar a la conversación específica
-                window.location.href = `/dashboard/logistics/conversations/whatsapp/${conv.user_identifier}`;
-              }}
-            />
-          ))
+          filteredConversations.map(conv => {
+            // Usar el indicador del estado actual o uno por defecto
+            const indicator = STATUS_INDICATORS[conv.current_status as ConversationStatus] ||
+              STATUS_INDICATORS['menu_principal'];
+
+            return (
+              <ConversationCard
+                key={conv.id}
+                conversation={conv}
+                statusIndicator={indicator}
+                onClick={() => {
+                  // Si hay un handler definido, usarlo, si no navegar
+                  if (onSelectConversation) {
+                    onSelectConversation(conv);
+                  } else {
+                    window.location.href = `/dashboard/logistics/conversations/whatsapp/${conv.user_identifier}`;
+                  }
+                }}
+                isSelected={selectedPhone === conv.user_identifier}
+              />
+            );
+          })
         )}
       </div>
     </div>

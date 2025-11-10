@@ -6,6 +6,7 @@ import { Package, Filter, Calendar, MapPin, User, Phone, Eye, ShoppingCart, Info
 import apiClient from "@/lib/api-client";
 import type { Order, Branch } from "@/types/api";
 import PaymentStatusModal from "@/components/PaymentStatusModal";
+import { toast } from 'sonner';
 
 export default function LogisticsOrdersPage() {
   const { user, loading } = useRequireAuth(["logistics", "logistica", "admin"]);
@@ -109,7 +110,7 @@ export default function LogisticsOrdersPage() {
         logistics_confirmed: false,
       });
 
-      alert("Pago confirmado exitosamente");
+      toast.success("Pago confirmado exitosamente");
 
       // Actualizar la orden localmente
       const updatedOrder = { ...paymentOrder, payment_status: "paid", payment_method: paymentMethod };
@@ -154,13 +155,13 @@ export default function LogisticsOrdersPage() {
 
   const handleConfirmAssign = async () => {
     if (!selectedOrder || !selectedBranch || !deliveryDate) {
-      alert("Por favor completa todos los campos");
+      toast.error("Por favor completa todos los campos");
       return;
     }
 
     // Verificar que la orden esté pagada antes de asignar
     if (selectedOrder.payment_status !== "paid") {
-      alert("La orden debe estar pagada antes de asignarla a una sucursal");
+      toast.error("La orden debe estar pagada antes de asignarla a una sucursal");
       setShowAssignModal(false);
       setPaymentOrder(selectedOrder);
       setShowPaymentModal(true);
@@ -198,7 +199,7 @@ export default function LogisticsOrdersPage() {
         });
       });
 
-      alert("Orden asignada exitosamente");
+      toast.success("Orden asignada exitosamente");
       setShowAssignModal(false);
       setSelectedOrder(null);
       setSelectedBranch("");
@@ -208,7 +209,7 @@ export default function LogisticsOrdersPage() {
       setTimeout(() => loadData(), 500);
     } catch (error) {
       console.error("Error assigning order:", error);
-      alert("Error al asignar la orden. Verifica que el endpoint esté implementado.");
+      toast.error("Error al asignar la orden. Verifica que el endpoint esté implementado.");
     } finally {
       setAssigning(false);
     }
@@ -303,7 +304,7 @@ export default function LogisticsOrdersPage() {
 
       {/* Assign Modal */}
       {showAssignModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Asignar Orden</h2>
 
@@ -415,7 +416,7 @@ export default function LogisticsOrdersPage() {
 
       {/* Order Details Modal */}
       {showDetailsModal && detailOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex justify-between items-start mb-4">
               <div>

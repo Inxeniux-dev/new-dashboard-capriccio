@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, CreditCard, Banknote, Link as LinkIcon, Wallet } from "lucide-react";
 import type { Order } from "@/types/api";
+import { toast } from 'sonner';
 
 interface PaymentStatusModalProps {
   order: Order;
@@ -27,7 +28,7 @@ export default function PaymentStatusModal({
 
   const handleConfirm = async () => {
     if (!selectedMethod) {
-      alert("Por favor selecciona un método de pago");
+      toast.error("Por favor selecciona un método de pago");
       return;
     }
 
@@ -37,14 +38,14 @@ export default function PaymentStatusModal({
       onClose();
     } catch (error) {
       console.error("Error updating payment status:", error);
-      alert("Error al actualizar el estatus de pago");
+      toast.error("Error al actualizar el estatus de pago");
     } finally {
       setConfirming(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
         <div className="flex justify-between items-start mb-4">
           <div>

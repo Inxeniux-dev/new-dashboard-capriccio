@@ -2,6 +2,7 @@
 
 import { Sparkles, Download, RefreshCw } from "lucide-react";
 import type { AIAnalysis } from "@/types/api";
+import { toast } from 'sonner';
 
 interface AIAnalysisPanelProps {
   analysis: AIAnalysis | null;
@@ -18,7 +19,7 @@ export function AIAnalysisPanel({
 }: AIAnalysisPanelProps) {
   const handleExportPDF = () => {
     // TODO: Implementar exportación a PDF
-    alert("Exportación a PDF - En desarrollo");
+    toast.error("Exportación a PDF - En desarrollo");
   };
 
   if (!analysis && !isLoading) {

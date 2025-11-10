@@ -29,7 +29,8 @@ import {
   Clock,
   ChevronDown,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Tag
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -101,6 +102,11 @@ const getMenuItemsByRole = (role: string, stats?: SidebarStats): MenuItem[] => {
         href: "/dashboard/logistics/orders",
         badge: stats?.pendingOrders ? String(stats.pendingOrders) : undefined,
         badgeColor: "bg-orange-500"
+      },
+      {
+        icon: Tag,
+        label: "Productos",
+        href: "/dashboard/admin/productos"
       },
       {
         icon: MessageSquare,
@@ -186,6 +192,11 @@ const getMenuItemsByRole = (role: string, stats?: SidebarStats): MenuItem[] => {
         href: "/dashboard/logistics/orders",
         badge: stats?.pendingOrders ? String(stats.pendingOrders) : undefined,
         badgeColor: "bg-red-500"
+      },
+      {
+        icon: Tag,
+        label: "Productos",
+        href: "/dashboard/logistics/productos"
       },
       {
         icon: Truck,

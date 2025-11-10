@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useRequireAuth } from "@/contexts/AuthContext";
 import { User as UserIcon, Mail, Shield, Edit2, Trash2, Plus, Building, AlertCircle } from "lucide-react";
 import apiClient from "@/lib/api-client";
@@ -169,17 +170,17 @@ export default function UsersManagementPage() {
 
     // Si hay error de API, no permitir guardar
     if (apiError) {
-      alert("No se puede guardar mientras el backend no esté disponible");
+      toast.error("No se puede guardar mientras el backend no esté disponible");
       return;
     }
 
     if (!formData.email || !formData.role) {
-      alert("Por favor completa los campos obligatorios");
+      toast.error("Por favor completa los campos obligatorios");
       return;
     }
 
     if (!editingUser && !formData.password) {
-      alert("La contraseña es obligatoria para nuevos usuarios");
+      toast.error("La contraseña es obligatoria para nuevos usuarios");
       return;
     }
 
@@ -196,7 +197,7 @@ export default function UsersManagementPage() {
         };
 
         await apiClient.users.update(editingUser.id, updateData);
-        alert("Usuario actualizado exitosamente");
+        toast.success("Usuario actualizado exitosamente");
       } else {
         // Crear nuevo usuario
         await apiClient.users.create({
@@ -206,14 +207,14 @@ export default function UsersManagementPage() {
           role: formData.role,
           branch_id: formData.branch_id || undefined,
         });
-        alert("Usuario creado exitosamente");
+        toast.success("Usuario creado exitosamente");
       }
 
       handleCloseModal();
       loadData();
     } catch (error) {
       console.error("Error saving user:", error);
-      alert("Error al guardar el usuario. El backend podría no estar disponible.");
+      toast.error("Error al guardar el usuario. El backend podría no estar disponible.");
     } finally {
       setSaving(false);
     }
@@ -222,7 +223,7 @@ export default function UsersManagementPage() {
   const handleDelete = async (userId: string) => {
     // Si hay error de API, no permitir eliminar
     if (apiError) {
-      alert("No se puede eliminar mientras el backend no esté disponible");
+      toast.error("No se puede eliminar mientras el backend no esté disponible");
       return;
     }
 
@@ -232,11 +233,11 @@ export default function UsersManagementPage() {
 
     try {
       await apiClient.users.delete(userId);
-      alert("Usuario eliminado exitosamente");
+      toast.success("Usuario eliminado exitosamente");
       loadData();
     } catch (error) {
       console.error("Error deleting user:", error);
-      alert("Error al eliminar el usuario. El backend podría no estar disponible.");
+      toast.error("Error al eliminar el usuario. El backend podría no estar disponible.");
     }
   };
 
@@ -339,7 +340,7 @@ export default function UsersManagementPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full p-6">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
               {editingUser ? "Editar Usuario" : "Nuevo Usuario"}

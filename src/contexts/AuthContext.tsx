@@ -23,20 +23,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Cargar usuario del localStorage al iniciar
+  // Cargar usuario del localStorage al iniciar y validar token
   useEffect(() => {
-    const loadUser = () => {
+    const loadUser = async () => {
       try {
         const storedUser = localStorage.getItem("user");
         const token = localStorage.getItem("auth_token");
 
         if (storedUser && token) {
-          setUser(JSON.parse(storedUser));
+          // Intentar validar el token obteniendo el perfil
+          try {
+            const profileResponse = await apiClient.auth.getProfile();
+
+            if (profileResponse.success && profileResponse.data) {
+              // Token válido - actualizar usuario con datos frescos del servidor
+              setUser(profileResponse.data);
+              localStorage.setItem("user", JSON.stringify(profileResponse.data));
+            } else {
+              // Token inválido - limpiar sesión
+              throw new Error("Token inválido");
+            }
+          } catch (profileError) {
+            // Si falla la validación, limpiar sesión
+            console.warn("Token expirado o inválido. Limpiando sesión...");
+            localStorage.removeItem("user");
+            localStorage.removeItem("auth_token");
+            setUser(null);
+          }
         }
       } catch (error) {
         console.error("Error loading user from localStorage:", error);
         localStorage.removeItem("user");
         localStorage.removeItem("auth_token");
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -50,9 +69,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await apiClient.auth.login(credentials);
 
       if (response.success && response.data?.token && response.data?.user) {
-        // Guardar token y usuario
+        // Guardar tokens y datos del usuario
         localStorage.setItem("auth_token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
+
+        // Guardar refresh_token si está disponible
+        if (response.data.refresh_token) {
+          localStorage.setItem("refresh_token", response.data.refresh_token);
+        }
+
+        // Guardar fecha de expiración si está disponible
+        if (response.data.expires_at) {
+          localStorage.setItem("token_expires_at", response.data.expires_at);
+        }
+
         setUser(response.data.user);
 
         // Mostrar mensaje de éxito
@@ -106,8 +136,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Limpiar estado local
+      // Limpiar estado local y todos los tokens
       localStorage.removeItem("auth_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("token_expires_at");
       localStorage.removeItem("user");
       setUser(null);
       router.push("/");
