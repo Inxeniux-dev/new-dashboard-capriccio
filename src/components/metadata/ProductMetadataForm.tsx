@@ -1,8 +1,9 @@
 // Formulario para editar metadatos de productos
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { MetadataSelect } from './MetadataSelect';
-import { useMetadataOptions } from '@/hooks/useMetadataOptions';
+import { CategorySelector } from './CategorySelector';
+import { useCategorization } from '@/hooks/useCategorization';
+import { categorizationService } from '@/services/categorizationService';
 import type { CustomMetadata, EnrichedProduct } from '@/services/productMetadataService';
 
 interface ProductMetadataFormProps {
@@ -22,7 +23,6 @@ export const ProductMetadataForm: React.FC<ProductMetadataFormProps> = ({
   onCancel,
   mode = 'full',
 }) => {
-  const { options, loading: optionsLoading } = useMetadataOptions();
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -30,31 +30,57 @@ export const ProductMetadataForm: React.FC<ProductMetadataFormProps> = ({
     custom_category: initialData?.custom_category || '',
     custom_subcategory: initialData?.custom_subcategory || '',
     custom_presentation: initialData?.custom_presentation || '',
+    category_id: initialData?.category_id || null,
+    subcategory_id: initialData?.subcategory_id || null,
+    presentation_id: initialData?.presentation_id || null,
     ai_description: initialData?.ai_description || '',
     search_keywords: initialData?.search_keywords || [],
     allergen_info: initialData?.allergen_info || [],
   });
 
+  // Hook para manejar categorización jerárquica
+  const {
+    setSelectedCategory,
+    setSelectedSubcategory,
+    setSelectedPresentation,
+    isValid: isCategoryValid,
+    getCombination,
+  } = useCategorization({
+    initialCategoryId: initialData?.category_id || undefined,
+    initialSubcategoryId: initialData?.subcategory_id || undefined,
+    initialPresentationId: initialData?.presentation_id || undefined,
+    autoLoadOnMount: true,
+  });
+
   const [keywordInput, setKeywordInput] = useState('');
   const [allergenInput, setAllergenInput] = useState('');
 
-  const validateForm = (): boolean => {
+  const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.custom_category?.trim()) {
-      newErrors.custom_category = 'La categoría es obligatoria';
-    }
-
-    if (!formData.custom_presentation?.trim()) {
-      newErrors.custom_presentation = 'La presentación es obligatoria';
-    }
-
-    if (formData.custom_category && formData.custom_category.length > 50) {
-      newErrors.custom_category = 'La categoría no puede exceder 50 caracteres';
+    // Validar categorización jerárquica
+    if (!isCategoryValid()) {
+      newErrors.categorization = 'Debe seleccionar categoría, subcategoría y presentación';
     }
 
     if (formData.ai_description && formData.ai_description.length > 500) {
       newErrors.ai_description = 'La descripción no puede exceder 500 caracteres';
+    }
+
+    // Validar combinación con el backend si está completa
+    if (isCategoryValid()) {
+      const combination = getCombination();
+      if (combination) {
+        try {
+          const validation = await categorizationService.validateCombination(combination);
+          if (!validation.valid) {
+            newErrors.categorization = validation.message || 'Combinación de categorías inválida';
+          }
+        } catch (err) {
+          console.error('Error validating combination:', err);
+          newErrors.categorization = 'Error al validar la combinación de categorías';
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -64,14 +90,37 @@ export const ProductMetadataForm: React.FC<ProductMetadataFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    const isValid = await validateForm();
+    if (!isValid) {
       return;
     }
 
     setSaving(true);
 
     try {
-      await onSave(formData);
+      // Obtener la combinación de categorías seleccionadas
+      const combination = getCombination();
+
+      // Preparar los datos completos con categorización jerárquica
+      const metadataToSave = {
+        ...formData,
+        category_id: combination?.category_id || null,
+        subcategory_id: combination?.subcategory_id || null,
+        presentation_id: combination?.presentation_id || null,
+      };
+
+      // Primero guardar la categorización en el sistema de categorías
+      if (combination) {
+        try {
+          await categorizationService.categorizeProduct(productId, combination);
+        } catch (err) {
+          console.error('Error categorizing product:', err);
+          // Continuar aunque falle la categorización específica
+        }
+      }
+
+      // Luego guardar todos los metadatos
+      await onSave(metadataToSave);
     } catch (err) {
       console.error('Error saving metadata:', err);
       toast.error('Error al guardar los metadatos. Por favor, intenta nuevamente.');
@@ -130,44 +179,30 @@ export const ProductMetadataForm: React.FC<ProductMetadataFormProps> = ({
 
       {/* Metadatos Personalizados */}
       <div className="space-y-4">
-        <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">Metadatos Personalizados</h4>
+        <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
+          Categorización del Producto
+        </h4>
 
-        {/* Categoría */}
-        <MetadataSelect
-          label="Categoría"
-          value={formData.custom_category || ''}
-          options={options.categories}
-          onChange={(value) => setFormData({ ...formData, custom_category: value })}
-          allowCreate={mode === 'full'}
-          required
-          placeholder="Seleccionar categoría..."
-          disabled={optionsLoading || saving}
-          error={errors.custom_category}
-        />
+        {/* Sistema de categorización jerárquica */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <CategorySelector
+            initialCategoryId={formData.category_id || undefined}
+            initialSubcategoryId={formData.subcategory_id || undefined}
+            initialPresentationId={formData.presentation_id || undefined}
+            onCategoryChange={(id) => setSelectedCategory(id)}
+            onSubcategoryChange={(id) => setSelectedSubcategory(id)}
+            onPresentationChange={(id) => setSelectedPresentation(id)}
+            disabled={saving}
+            showLabels={true}
+            size="md"
+          />
+        </div>
 
-        {/* Subcategoría */}
-        <MetadataSelect
-          label="Subcategoría"
-          value={formData.custom_subcategory || ''}
-          options={options.subcategories}
-          onChange={(value) => setFormData({ ...formData, custom_subcategory: value })}
-          allowCreate={mode === 'full'}
-          placeholder="Seleccionar subcategoría..."
-          disabled={optionsLoading || saving}
-        />
-
-        {/* Presentación */}
-        <MetadataSelect
-          label="Presentación"
-          value={formData.custom_presentation || ''}
-          options={options.presentations}
-          onChange={(value) => setFormData({ ...formData, custom_presentation: value })}
-          allowCreate={mode === 'full'}
-          required
-          placeholder="Seleccionar presentación..."
-          disabled={optionsLoading || saving}
-          error={errors.custom_presentation}
-        />
+        {errors.categorization && (
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
+            <p className="text-sm text-red-700 dark:text-red-300">{errors.categorization}</p>
+          </div>
+        )}
 
         {/* Campos avanzados solo para administrador */}
         {mode === 'full' && (
@@ -312,7 +347,7 @@ export const ProductMetadataForm: React.FC<ProductMetadataFormProps> = ({
         <button
           type="submit"
           className="px-5 py-2.5 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={saving || optionsLoading}
+          disabled={saving}
         >
           {saving ? 'Guardando...' : 'Guardar Cambios'}
         </button>

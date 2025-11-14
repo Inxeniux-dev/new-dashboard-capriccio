@@ -2,6 +2,7 @@
 
 // Página principal de gestión de metadatos de productos - Administrador
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useEnrichedProducts } from '@/hooks/useEnrichedProducts';
 import { productMetadataService } from '@/services/productMetadataService';
@@ -13,6 +14,7 @@ import { useMetadataOptions } from '@/hooks/useMetadataOptions';
 import type { EnrichedProduct, CustomMetadata } from '@/services/productMetadataService';
 
 export default function ProductMetadataAdminPage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedPresentation, setSelectedPresentation] = useState('');
@@ -139,6 +141,13 @@ export default function ProductMetadataAdminPage() {
           className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
         >
           {syncInProgress ? '⏳ Sincronizando...' : '🔄 Sincronizar iPOS'}
+        </button>
+
+        <button
+          onClick={() => router.push('/dashboard/admin/categorias')}
+          className="px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-medium"
+        >
+          ⚙️ Configurar Categorías
         </button>
 
         <button

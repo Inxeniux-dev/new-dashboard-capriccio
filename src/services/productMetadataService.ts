@@ -13,6 +13,10 @@ interface CustomMetadata {
   ai_description?: string | null;
   search_keywords?: string[] | null;
   allergen_info?: string[] | null;
+  // Nuevos campos para categorización jerárquica
+  category_id?: number | null;
+  subcategory_id?: number | null;
+  presentation_id?: number | null;
   created_at?: string;
   updated_at?: string;
 }
