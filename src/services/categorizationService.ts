@@ -23,6 +23,18 @@ export interface Subcategory {
   is_active: boolean;
 }
 
+export interface Subsubcategory {
+  id: number;
+  code: string;
+  name: string;
+  subcategory_id: number;
+  description?: string;
+  display_order?: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Presentation {
   id: number;
   code: string;
@@ -35,6 +47,7 @@ export interface Presentation {
 export interface CategoryOptions {
   categories: Category[];
   subcategories: Subcategory[];
+  subsubcategories: Subsubcategory[];
   presentations: Presentation[];
 }
 
@@ -59,11 +72,15 @@ export interface ProductCategorization {
   product_id: string;
   category_id: number;
   subcategory_id: number;
+  subsubcategory_id?: number; // Nuevo campo opcional
   presentation_id: number;
   product_categories?: {
     name: string;
   };
   product_subcategories?: {
+    name: string;
+  };
+  product_subsubcategories?: {
     name: string;
   };
   product_presentations?: {
@@ -215,6 +232,59 @@ class CategorizationService {
       throw new Error(
         errorData?.message || `Failed to categorize product: ${response.statusText}`
       );
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Obtiene sub-subcategorías de una subcategoría
+   */
+  async getSubsubcategories(
+    subcategoryId: number,
+    activeOnly: boolean = true
+  ): Promise<{
+    success: boolean;
+    count: number;
+    data: Subsubcategory[];
+  }> {
+    const queryParams = new URLSearchParams();
+    if (activeOnly) {
+      queryParams.append('activeOnly', 'true');
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/categories/subcategories/${subcategoryId}/subsubcategories?${queryParams.toString()}`,
+      {
+        method: 'GET',
+        headers: this.getHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch sub-subcategories: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Obtiene una sub-subcategoría por ID
+   */
+  async getSubsubcategoryById(id: number): Promise<{
+    success: boolean;
+    data: Subsubcategory;
+  }> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/categories/subsubcategories/${id}`,
+      {
+        method: 'GET',
+        headers: this.getHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch sub-subcategory: ${response.statusText}`);
     }
 
     return response.json();

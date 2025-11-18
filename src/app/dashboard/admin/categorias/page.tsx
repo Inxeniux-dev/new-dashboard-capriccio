@@ -7,19 +7,22 @@ import { categorizationService } from '@/services/categorizationService';
 import { categoryAdminService } from '@/services/categoryAdminService';
 import { CategoryForm } from '@/components/categories/CategoryForm';
 import { SubcategoryForm } from '@/components/categories/SubcategoryForm';
+import { SubsubcategoryForm } from '@/components/categories/SubsubcategoryForm';
 import { PresentationForm } from '@/components/categories/PresentationForm';
 import { Modal } from '@/components/metadata/Modal';
-import type { Category, Subcategory, Presentation } from '@/services/categorizationService';
+import type { Category, Subcategory, Subsubcategory, Presentation } from '@/services/categorizationService';
 import type {
   CreateCategoryData,
   UpdateCategoryData,
   CreateSubcategoryData,
   UpdateSubcategoryData,
+  CreateSubsubcategoryData,
+  UpdateSubsubcategoryData,
   CreatePresentationData,
   UpdatePresentationData,
 } from '@/services/categoryAdminService';
 
-type TabType = 'categories' | 'subcategories' | 'presentations';
+type TabType = 'categories' | 'subcategories' | 'subsubcategories' | 'presentations';
 type ModalMode = 'create' | 'edit' | null;
 
 export default function CategoryAdminPage() {
@@ -35,6 +38,11 @@ export default function CategoryAdminPage() {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(null);
   const [subcategoryModalMode, setSubcategoryModalMode] = useState<ModalMode>(null);
+
+  // Estados para sub-subcategorías
+  const [subsubcategories, setSubsubcategories] = useState<Subsubcategory[]>([]);
+  const [editingSubsubcategory, setEditingSubsubcategory] = useState<Subsubcategory | null>(null);
+  const [subsubcategoryModalMode, setSubsubcategoryModalMode] = useState<ModalMode>(null);
 
   // Estados para presentaciones
   const [presentations, setPresentations] = useState<Presentation[]>([]);
@@ -70,6 +78,26 @@ export default function CategoryAdminPage() {
         });
       });
       setSubcategories(allSubcategories);
+
+      // Cargar todas las sub-subcategorías
+      try {
+        const allSubsubcategories: Subsubcategory[] = [];
+        for (const subcategory of allSubcategories) {
+          try {
+            const subsubcategoriesRes = await categorizationService.getSubsubcategories(
+              subcategory.id,
+              false // Cargar todas, incluso inactivas
+            );
+            allSubsubcategories.push(...subsubcategoriesRes.data);
+          } catch (subsubError) {
+            console.error(`Error loading subsubcategories for subcategory ${subcategory.id}:`, subsubError);
+          }
+        }
+        setSubsubcategories(allSubsubcategories);
+      } catch (subsubError) {
+        console.error('Error loading subsubcategories:', subsubError);
+        setSubsubcategories([]);
+      }
 
       // Intentar cargar presentaciones (endpoint nuevo que puede fallar)
       try {
@@ -216,6 +244,74 @@ export default function CategoryAdminPage() {
     }
   };
 
+  // ==================== HANDLERS SUB-SUBCATEGORÍAS ====================
+
+  const handleCreateSubsubcategory = async (data: CreateSubsubcategoryData) => {
+    try {
+      await categoryAdminService.createSubsubcategory(data);
+      toast.success('Sub-subcategoría creada exitosamente');
+      setSubsubcategoryModalMode(null);
+      loadData();
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Error al crear sub-subcategoría');
+      throw err;
+    }
+  };
+
+  const handleUpdateSubsubcategory = async (data: UpdateSubsubcategoryData) => {
+    if (!editingSubsubcategory) return;
+
+    try {
+      const result = await categoryAdminService.updateSubsubcategory(editingSubsubcategory.id, data);
+      toast.success(
+        `Sub-subcategoría actualizada. ${result.affectedProducts || 0} productos afectados`
+      );
+      setSubsubcategoryModalMode(null);
+      setEditingSubsubcategory(null);
+      loadData();
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Error al actualizar sub-subcategoría');
+      throw err;
+    }
+  };
+
+  const handleDeleteSubsubcategory = async (subsubcategory: Subsubcategory) => {
+    if (
+      !confirm(
+        `¿Está seguro de eliminar la sub-subcategoría "${subsubcategory.name}"?\n\nEsto puede afectar a los productos relacionados.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const result = await categoryAdminService.deleteSubsubcategory(subsubcategory.id);
+      toast.success(result.message);
+      if (result.affectedProducts) {
+        toast.info(`${result.affectedProducts} productos fueron actualizados`);
+      }
+      loadData();
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Error al eliminar sub-subcategoría');
+    }
+  };
+
+  const handleToggleSubsubcategoryStatus = async (subsubcategory: Subsubcategory) => {
+    try {
+      await categoryAdminService.toggleSubsubcategoryStatus(subsubcategory.id);
+      toast.success(
+        `Sub-subcategoría ${subsubcategory.is_active ? 'desactivada' : 'activada'} exitosamente`
+      );
+      loadData();
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Error al cambiar estado');
+    }
+  };
+
   // ==================== HANDLERS PRESENTACIONES ====================
 
   const handleCreatePresentation = async (data: CreatePresentationData) => {
@@ -320,6 +416,16 @@ export default function CategoryAdminPage() {
             Subcategorías ({subcategories.length})
           </button>
           <button
+            onClick={() => setActiveTab('subsubcategories')}
+            className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+              activeTab === 'subsubcategories'
+                ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+            }`}
+          >
+            Sub-subcategorías ({subsubcategories.length})
+          </button>
+          <button
             onClick={() => setActiveTab('presentations')}
             className={`px-4 py-2 font-medium border-b-2 transition-colors ${
               activeTab === 'presentations'
@@ -348,6 +454,14 @@ export default function CategoryAdminPage() {
             className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
           >
             + Nueva Subcategoría
+          </button>
+        )}
+        {activeTab === 'subsubcategories' && (
+          <button
+            onClick={() => setSubsubcategoryModalMode('create')}
+            className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+          >
+            + Nueva Sub-subcategoría
           </button>
         )}
         {activeTab === 'presentations' && (
@@ -525,6 +639,103 @@ export default function CategoryAdminPage() {
             </div>
           )}
 
+          {/* Tabla de Sub-subcategorías */}
+          {activeTab === 'subsubcategories' && (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Subcategoría
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Código
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Nombre
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Descripción
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Orden
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {subsubcategories.map((subsubcategory) => {
+                    const parentSubcategory = subcategories.find(
+                      (s) => s.id === subsubcategory.subcategory_id
+                    );
+                    return (
+                      <tr key={subsubcategory.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                          {parentSubcategory?.name || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <code className="text-sm bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded">
+                            {subsubcategory.code}
+                          </code>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {subsubcategory.name}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                          {subsubcategory.description || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                          {subsubcategory.display_order || 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              subsubcategory.is_active
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                            }`}
+                          >
+                            {subsubcategory.is_active ? 'Activa' : 'Inactiva'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingSubsubcategory(subsubcategory);
+                                setSubsubcategoryModalMode('edit');
+                              }}
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => handleToggleSubsubcategoryStatus(subsubcategory)}
+                              className="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300"
+                            >
+                              {subsubcategory.is_active ? 'Desactivar' : 'Activar'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSubsubcategory(subsubcategory)}
+                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
           {/* Tabla de Presentaciones */}
           {activeTab === 'presentations' && (
             <div className="overflow-x-auto">
@@ -668,6 +879,35 @@ export default function CategoryAdminPage() {
               setEditingSubcategory(null);
             }}
             mode={subcategoryModalMode}
+          />
+        </Modal>
+      )}
+
+      {/* Modal Sub-subcategoría */}
+      {subsubcategoryModalMode && (
+        <Modal
+          isOpen={!!subsubcategoryModalMode}
+          onClose={() => {
+            setSubsubcategoryModalMode(null);
+            setEditingSubsubcategory(null);
+          }}
+          title={
+            subsubcategoryModalMode === 'create' ? 'Nueva Sub-subcategoría' : 'Editar Sub-subcategoría'
+          }
+          size="md"
+        >
+          <SubsubcategoryForm
+            subsubcategory={editingSubsubcategory || undefined}
+            onSubmit={(data) =>
+              subsubcategoryModalMode === 'create'
+                ? handleCreateSubsubcategory(data as CreateSubsubcategoryData)
+                : handleUpdateSubsubcategory(data as UpdateSubsubcategoryData)
+            }
+            onCancel={() => {
+              setSubsubcategoryModalMode(null);
+              setEditingSubsubcategory(null);
+            }}
+            mode={subsubcategoryModalMode}
           />
         </Modal>
       )}

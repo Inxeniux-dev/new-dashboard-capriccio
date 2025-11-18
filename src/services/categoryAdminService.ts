@@ -7,6 +7,7 @@ const API_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || '';
 import type {
   Category,
   Subcategory,
+  Subsubcategory,
   Presentation,
 } from './categorizationService';
 
@@ -37,6 +38,23 @@ export interface UpdateSubcategoryData {
   code?: string;
   name?: string;
   category_id?: number;
+  display_order?: number;
+  is_active?: boolean;
+}
+
+export interface CreateSubsubcategoryData {
+  code: string;
+  name: string;
+  subcategory_id: number;
+  description?: string;
+  display_order?: number;
+}
+
+export interface UpdateSubsubcategoryData {
+  code?: string;
+  name?: string;
+  subcategory_id?: number;
+  description?: string;
   display_order?: number;
   is_active?: boolean;
 }
@@ -302,6 +320,128 @@ class CategoryAdminService {
   async getSubcategoryProductsCount(id: number): Promise<ProductImpact> {
     const response = await fetch(
       `${API_BASE_URL}/api/categories/subcategories/${id}/products-count`,
+      {
+        method: 'GET',
+        headers: this.getHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(
+        errorData?.message || 'Error al obtener conteo de productos'
+      );
+    }
+
+    return response.json();
+  }
+
+  // ==================== SUB-SUBCATEGORÍAS ====================
+
+  /**
+   * Crear nueva sub-subcategoría
+   */
+  async createSubsubcategory(data: CreateSubsubcategoryData): Promise<{
+    success: boolean;
+    data: Subsubcategory;
+  }> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/categories/subcategories/${data.subcategory_id}/subsubcategories`,
+      {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || 'Error al crear sub-subcategoría');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Actualizar sub-subcategoría existente
+   */
+  async updateSubsubcategory(
+    id: number,
+    data: UpdateSubsubcategoryData
+  ): Promise<{
+    success: boolean;
+    data: Subsubcategory;
+    affectedProducts?: number;
+  }> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/categories/subsubcategories/${id}`,
+      {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || 'Error al actualizar sub-subcategoría');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Eliminar sub-subcategoría
+   */
+  async deleteSubsubcategory(id: number, force: boolean = false): Promise<DeleteResponse> {
+    const queryParams = force ? '?force=true' : '';
+    const response = await fetch(
+      `${API_BASE_URL}/api/categories/subsubcategories/${id}${queryParams}`,
+      {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || 'Error al eliminar sub-subcategoría');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Activar/Desactivar sub-subcategoría
+   */
+  async toggleSubsubcategoryStatus(id: number): Promise<{
+    success: boolean;
+    data: Subsubcategory;
+  }> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/categories/subsubcategories/${id}/toggle-status`,
+      {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(
+        errorData?.message || 'Error al cambiar estado de sub-subcategoría'
+      );
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Obtener conteo de productos afectados por una sub-subcategoría
+   */
+  async getSubsubcategoryProductsCount(id: number): Promise<ProductImpact> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/categories/subsubcategories/${id}/products-count`,
       {
         method: 'GET',
         headers: this.getHeaders(),
