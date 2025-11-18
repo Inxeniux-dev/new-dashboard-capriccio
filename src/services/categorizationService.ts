@@ -44,11 +44,23 @@ export interface Presentation {
   is_active: boolean;
 }
 
+export interface Duration {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+  display_order?: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface CategoryOptions {
   categories: Category[];
   subcategories: Subcategory[];
   subsubcategories: Subsubcategory[];
   presentations: Presentation[];
+  durations?: Duration[];
 }
 
 export interface CategoryHierarchy {
@@ -304,6 +316,53 @@ class CategorizationService {
 
     if (!response.ok) {
       throw new Error(`Failed to fetch presentations: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Obtiene todas las duraciones disponibles
+   */
+  async getAllDurations(activeOnly: boolean = true): Promise<{
+    success: boolean;
+    count: number;
+    data: Duration[];
+  }> {
+    const queryParams = new URLSearchParams();
+    if (activeOnly) {
+      queryParams.append('activeOnly', 'true');
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/durations?${queryParams.toString()}`,
+      {
+        method: 'GET',
+        headers: this.getHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch durations: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Obtiene una duración por ID
+   */
+  async getDurationById(id: number): Promise<{
+    success: boolean;
+    data: Duration;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/api/durations/${id}`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch duration: ${response.statusText}`);
     }
 
     return response.json();

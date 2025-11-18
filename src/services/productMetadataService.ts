@@ -16,7 +16,10 @@ interface CustomMetadata {
   // Nuevos campos para categorización jerárquica
   category_id?: number | null;
   subcategory_id?: number | null;
+  subsubcategory_id?: number | null;
   presentation_id?: number | null;
+  // Campo de duración (independiente de categorías)
+  duration_id?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -175,7 +178,7 @@ class ProductMetadataService {
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       throw new Error(
-        errorData?.error || `Failed to save metadata: ${response.statusText}`
+        errorData?.error || errorData?.message || `Failed to save metadata: ${response.statusText}`
       );
     }
 

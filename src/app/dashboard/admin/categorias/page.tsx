@@ -9,8 +9,9 @@ import { CategoryForm } from '@/components/categories/CategoryForm';
 import { SubcategoryForm } from '@/components/categories/SubcategoryForm';
 import { SubsubcategoryForm } from '@/components/categories/SubsubcategoryForm';
 import { PresentationForm } from '@/components/categories/PresentationForm';
+import { DurationForm } from '@/components/categories/DurationForm';
 import { Modal } from '@/components/metadata/Modal';
-import type { Category, Subcategory, Subsubcategory, Presentation } from '@/services/categorizationService';
+import type { Category, Subcategory, Subsubcategory, Presentation, Duration } from '@/services/categorizationService';
 import type {
   CreateCategoryData,
   UpdateCategoryData,
@@ -20,9 +21,11 @@ import type {
   UpdateSubsubcategoryData,
   CreatePresentationData,
   UpdatePresentationData,
+  CreateDurationData,
+  UpdateDurationData,
 } from '@/services/categoryAdminService';
 
-type TabType = 'categories' | 'subcategories' | 'subsubcategories' | 'presentations';
+type TabType = 'categories' | 'subcategories' | 'subsubcategories' | 'presentations' | 'durations';
 type ModalMode = 'create' | 'edit' | null;
 
 export default function CategoryAdminPage() {
@@ -48,6 +51,11 @@ export default function CategoryAdminPage() {
   const [presentations, setPresentations] = useState<Presentation[]>([]);
   const [editingPresentation, setEditingPresentation] = useState<Presentation | null>(null);
   const [presentationModalMode, setPresentationModalMode] = useState<ModalMode>(null);
+
+  // Estados para duraciones
+  const [durations, setDurations] = useState<Duration[]>([]);
+  const [editingDuration, setEditingDuration] = useState<Duration | null>(null);
+  const [durationModalMode, setDurationModalMode] = useState<ModalMode>(null);
 
   useEffect(() => {
     loadData();
@@ -111,6 +119,20 @@ export default function CategoryAdminPage() {
         );
         // Continuar sin presentaciones
         setPresentations([]);
+      }
+
+      // Intentar cargar duraciones
+      try {
+        const durationsRes = await categorizationService.getAllDurations(false);
+        setDurations(durationsRes.data);
+      } catch (durError) {
+        console.error('Error loading durations:', durError);
+        toast.error(
+          'No se pudieron cargar las duraciones. El endpoint GET /api/durations puede no estar implementado aún.',
+          { duration: 5000 }
+        );
+        // Continuar sin duraciones
+        setDurations([]);
       }
     } catch (err) {
       console.error('Error loading data:', err);
@@ -378,6 +400,87 @@ export default function CategoryAdminPage() {
     }
   };
 
+  // ==================== HANDLERS DURACIONES ====================
+
+  const handleCreateDuration = async (data: CreateDurationData) => {
+    try {
+      await categoryAdminService.createDuration(data);
+      toast.success('Duración creada exitosamente');
+      setDurationModalMode(null);
+      loadData();
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Error al crear duración');
+      throw err;
+    }
+  };
+
+  const handleUpdateDuration = async (data: UpdateDurationData) => {
+    if (!editingDuration) return;
+
+    try {
+      const result = await categoryAdminService.updateDuration(editingDuration.id, data);
+      toast.success(
+        `Duración actualizada. ${result.affectedProducts || 0} productos afectados`
+      );
+      setDurationModalMode(null);
+      setEditingDuration(null);
+      loadData();
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Error al actualizar duración');
+      throw err;
+    }
+  };
+
+  const handleDeleteDuration = async (duration: Duration) => {
+    // Primero verificar cuántos productos usan esta duración
+    try {
+      const countResult = await categoryAdminService.getDurationProductsCount(duration.id);
+
+      if (countResult.product_count > 0) {
+        if (
+          !confirm(
+            `Esta duración está siendo usada por ${countResult.product_count} productos.\n\n¿Está seguro de eliminarla?`
+          )
+        ) {
+          return;
+        }
+      } else {
+        if (
+          !confirm(
+            `¿Está seguro de eliminar la duración "${duration.name}"?`
+          )
+        ) {
+          return;
+        }
+      }
+
+      const result = await categoryAdminService.deleteDuration(duration.id, true);
+      toast.success(result.message);
+      if (result.affectedProducts) {
+        toast.info(`${result.affectedProducts} productos fueron actualizados`);
+      }
+      loadData();
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Error al eliminar duración');
+    }
+  };
+
+  const handleToggleDurationStatus = async (duration: Duration) => {
+    try {
+      await categoryAdminService.toggleDurationStatus(duration.id);
+      toast.success(
+        `Duración ${duration.is_active ? 'desactivada' : 'activada'} exitosamente`
+      );
+      loadData();
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Error al cambiar estado');
+    }
+  };
+
   // ==================== RENDER ====================
 
   return (
@@ -435,6 +538,16 @@ export default function CategoryAdminPage() {
           >
             Presentaciones ({presentations.length})
           </button>
+          <button
+            onClick={() => setActiveTab('durations')}
+            className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+              activeTab === 'durations'
+                ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+            }`}
+          >
+            Duraciones ({durations.length})
+          </button>
         </nav>
       </div>
 
@@ -470,6 +583,14 @@ export default function CategoryAdminPage() {
             className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
           >
             + Nueva Presentación
+          </button>
+        )}
+        {activeTab === 'durations' && (
+          <button
+            onClick={() => setDurationModalMode('create')}
+            className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+          >
+            + Nueva Duración
           </button>
         )}
       </div>
@@ -823,6 +944,92 @@ export default function CategoryAdminPage() {
               </table>
             </div>
           )}
+
+          {/* Tabla de Duraciones */}
+          {activeTab === 'durations' && (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Código
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Nombre
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Descripción
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Orden
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {durations.map((duration) => (
+                    <tr key={duration.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <code className="text-sm bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded">
+                          {duration.code}
+                        </code>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {duration.name}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                        {duration.description || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                        {duration.display_order || 0}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            duration.is_active
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                          }`}
+                        >
+                          {duration.is_active ? 'Activa' : 'Inactiva'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingDuration(duration);
+                              setDurationModalMode('edit');
+                            }}
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => handleToggleDurationStatus(duration)}
+                            className="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300"
+                          >
+                            {duration.is_active ? 'Desactivar' : 'Activar'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDuration(duration)}
+                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -937,6 +1144,35 @@ export default function CategoryAdminPage() {
               setEditingPresentation(null);
             }}
             mode={presentationModalMode}
+          />
+        </Modal>
+      )}
+
+      {/* Modal Duración */}
+      {durationModalMode && (
+        <Modal
+          isOpen={!!durationModalMode}
+          onClose={() => {
+            setDurationModalMode(null);
+            setEditingDuration(null);
+          }}
+          title={
+            durationModalMode === 'create' ? 'Nueva Duración' : 'Editar Duración'
+          }
+          size="md"
+        >
+          <DurationForm
+            duration={editingDuration || undefined}
+            onSubmit={(data) =>
+              durationModalMode === 'create'
+                ? handleCreateDuration(data as CreateDurationData)
+                : handleUpdateDuration(data as UpdateDurationData)
+            }
+            onCancel={() => {
+              setDurationModalMode(null);
+              setEditingDuration(null);
+            }}
+            mode={durationModalMode}
           />
         </Modal>
       )}

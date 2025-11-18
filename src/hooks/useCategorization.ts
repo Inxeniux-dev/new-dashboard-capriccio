@@ -4,6 +4,7 @@ import { categorizationService } from '@/services/categorizationService';
 import type {
   Category,
   Subcategory,
+  Subsubcategory,
   Presentation,
 } from '@/services/categorizationService';
 
@@ -11,6 +12,7 @@ interface UseCategorization {
   // Estados
   categories: Category[];
   subcategories: Subcategory[];
+  subsubcategories: Subsubcategory[];
   presentations: Presentation[];
   loading: boolean;
   error: string | null;
@@ -18,26 +20,30 @@ interface UseCategorization {
   // Valores seleccionados
   selectedCategory: number | null;
   selectedSubcategory: number | null;
+  selectedSubsubcategory: number | null;
   selectedPresentation: number | null;
 
   // Funciones de selección
   setSelectedCategory: (categoryId: number | null) => void;
   setSelectedSubcategory: (subcategoryId: number | null) => void;
+  setSelectedSubsubcategory: (subsubcategoryId: number | null) => void;
   setSelectedPresentation: (presentationId: number | null) => void;
 
   // Funciones utilitarias
   reset: () => void;
   isValid: () => boolean;
   getCombination: () => {
-    category_id: number;
-    subcategory_id: number;
-    presentation_id: number;
+    category_id: number | null;
+    subcategory_id: number | null;
+    subsubcategory_id: number | null;
+    presentation_id: number | null;
   } | null;
 }
 
 interface UseCategorizationOptions {
   initialCategoryId?: number;
   initialSubcategoryId?: number;
+  initialSubsubcategoryId?: number;
   initialPresentationId?: number;
   autoLoadOnMount?: boolean;
 }
@@ -48,6 +54,7 @@ export function useCategorization(
   const {
     initialCategoryId = null,
     initialSubcategoryId = null,
+    initialSubsubcategoryId = null,
     initialPresentationId = null,
     autoLoadOnMount = true,
   } = options;
@@ -55,6 +62,7 @@ export function useCategorization(
   // Estados de datos
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [subsubcategories, setSubsubcategories] = useState<Subsubcategory[]>([]);
   const [presentations, setPresentations] = useState<Presentation[]>([]);
 
   // Estados de selección
@@ -63,6 +71,9 @@ export function useCategorization(
   );
   const [selectedSubcategory, setSelectedSubcategoryState] = useState<number | null>(
     initialSubcategoryId
+  );
+  const [selectedSubsubcategory, setSelectedSubsubcategoryState] = useState<number | null>(
+    initialSubsubcategoryId
   );
   const [selectedPresentation, setSelectedPresentationState] = useState<number | null>(
     initialPresentationId
@@ -125,17 +136,35 @@ export function useCategorization(
 
   // Manejar cambio de subcategoría
   const setSelectedSubcategory = useCallback(
-    (subcategoryId: number | null) => {
+    async (subcategoryId: number | null) => {
       setSelectedSubcategoryState(subcategoryId);
+      setSelectedSubsubcategoryState(null);
       setSelectedPresentationState(null);
+      setSubsubcategories([]);
       setPresentations([]);
 
-      if (subcategoryId && selectedCategory) {
-        loadOptions(selectedCategory, subcategoryId);
+      // Cargar sub-subcategorías si hay subcategoría seleccionada
+      if (subcategoryId) {
+        try {
+          const subsubcategoriesRes = await categorizationService.getSubsubcategories(subcategoryId, true);
+          setSubsubcategories(subsubcategoriesRes.data);
+        } catch (err) {
+          console.error('Error loading subsubcategories:', err);
+          setSubsubcategories([]);
+        }
+
+        if (selectedCategory) {
+          loadOptions(selectedCategory, subcategoryId);
+        }
       }
     },
     [selectedCategory, loadOptions]
   );
+
+  // Manejar cambio de sub-subcategoría
+  const setSelectedSubsubcategory = useCallback((subsubcategoryId: number | null) => {
+    setSelectedSubsubcategoryState(subsubcategoryId);
+  }, []);
 
   // Manejar cambio de presentación
   const setSelectedPresentation = useCallback((presentationId: number | null) => {
@@ -146,43 +175,59 @@ export function useCategorization(
   const reset = useCallback(() => {
     setSelectedCategoryState(null);
     setSelectedSubcategoryState(null);
+    setSelectedSubsubcategoryState(null);
     setSelectedPresentationState(null);
     setSubcategories([]);
+    setSubsubcategories([]);
     setPresentations([]);
     loadOptions();
   }, [loadOptions]);
 
-  // Validar si la selección está completa
+  // Validar si la selección está completa (ahora todos son opcionales)
+  // Solo validamos que si hay algo seleccionado, la combinación tenga sentido
   const isValid = useCallback(() => {
+    // Si no hay nada seleccionado, es válido (todo es opcional)
+    if (!selectedCategory && !selectedSubcategory && !selectedSubsubcategory && !selectedPresentation) {
+      return true;
+    }
+    // Si hay algo seleccionado, al menos debe haber categoría, subcategoría y presentación
     return (
       selectedCategory !== null &&
       selectedSubcategory !== null &&
       selectedPresentation !== null
     );
-  }, [selectedCategory, selectedSubcategory, selectedPresentation]);
+  }, [selectedCategory, selectedSubcategory, selectedSubsubcategory, selectedPresentation]);
 
-  // Obtener combinación completa
+  // Obtener combinación completa (ahora permite valores null)
   const getCombination = useCallback(() => {
-    if (!isValid()) return null;
+    // Si no hay nada seleccionado, retornar null
+    if (!selectedCategory && !selectedSubcategory && !selectedSubsubcategory && !selectedPresentation) {
+      return null;
+    }
 
+    // Si hay selección parcial, retornar lo que haya
     return {
-      category_id: selectedCategory!,
-      subcategory_id: selectedSubcategory!,
-      presentation_id: selectedPresentation!,
+      category_id: selectedCategory,
+      subcategory_id: selectedSubcategory,
+      subsubcategory_id: selectedSubsubcategory,
+      presentation_id: selectedPresentation,
     };
-  }, [selectedCategory, selectedSubcategory, selectedPresentation, isValid]);
+  }, [selectedCategory, selectedSubcategory, selectedSubsubcategory, selectedPresentation]);
 
   return {
     categories,
     subcategories,
+    subsubcategories,
     presentations,
     loading,
     error,
     selectedCategory,
     selectedSubcategory,
+    selectedSubsubcategory,
     selectedPresentation,
     setSelectedCategory,
     setSelectedSubcategory,
+    setSelectedSubsubcategory,
     setSelectedPresentation,
     reset,
     isValid,

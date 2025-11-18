@@ -9,6 +9,7 @@ import type {
   Subcategory,
   Subsubcategory,
   Presentation,
+  Duration,
 } from './categorizationService';
 
 // Interfaces adicionales para administración
@@ -71,6 +72,21 @@ export interface UpdatePresentationData {
   name?: string;
   size_info?: string;
   is_default?: boolean;
+  is_active?: boolean;
+}
+
+export interface CreateDurationData {
+  code: string;
+  name: string;
+  description?: string;
+  display_order?: number;
+  is_active?: boolean;
+}
+
+export interface UpdateDurationData {
+  name?: string;
+  description?: string;
+  display_order?: number;
   is_active?: boolean;
 }
 
@@ -591,6 +607,124 @@ class CategoryAdminService {
   async getPresentationProductsCount(id: number): Promise<ProductImpact> {
     const response = await fetch(
       `${API_BASE_URL}/api/categories/presentations/${id}/products-count`,
+      {
+        method: 'GET',
+        headers: this.getHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(
+        errorData?.message || 'Error al obtener conteo de productos'
+      );
+    }
+
+    return response.json();
+  }
+
+  // ==================== DURACIONES ====================
+
+  /**
+   * Crear nueva duración
+   */
+  async createDuration(data: CreateDurationData): Promise<{
+    success: boolean;
+    message: string;
+    data: Duration;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/api/durations`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || 'Error al crear duración');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Actualizar duración existente
+   */
+  async updateDuration(
+    id: number,
+    data: UpdateDurationData
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: Duration;
+    affectedProducts?: number;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/api/durations/${id}`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || 'Error al actualizar duración');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Eliminar duración
+   */
+  async deleteDuration(id: number, force: boolean = false): Promise<DeleteResponse> {
+    const queryParams = force ? '?force=true' : '';
+    const response = await fetch(`${API_BASE_URL}/api/durations/${id}${queryParams}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || 'Error al eliminar duración');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Activar/Desactivar duración
+   */
+  async toggleDurationStatus(id: number): Promise<{
+    success: boolean;
+    message: string;
+    data: Duration;
+  }> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/durations/${id}/toggle-status`,
+      {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || 'Error al cambiar estado de duración');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Obtener conteo de productos afectados por una duración
+   */
+  async getDurationProductsCount(id: number): Promise<{
+    success: boolean;
+    duration_id: number;
+    product_count: number;
+  }> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/durations/${id}/products-count`,
       {
         method: 'GET',
         headers: this.getHeaders(),

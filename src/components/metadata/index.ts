@@ -2,6 +2,7 @@
 export { MetadataBadge } from './MetadataBadge';
 export { MetadataSelect } from './MetadataSelect';
 export { CategorySelector } from './CategorySelector';
+export { DurationSelector } from './DurationSelector';
 export { ProductCard } from './ProductCard';
 export { ProductMetadataForm } from './ProductMetadataForm';
 export { Modal } from './Modal';

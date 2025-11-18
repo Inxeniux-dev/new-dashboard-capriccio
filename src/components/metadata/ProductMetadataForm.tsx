@@ -1,7 +1,8 @@
 // Formulario para editar metadatos de productos
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { CategorySelector } from './CategorySelector';
+import { DurationSelector } from './DurationSelector';
 import { useCategorization } from '@/hooks/useCategorization';
 import { categorizationService } from '@/services/categorizationService';
 import type { CustomMetadata, EnrichedProduct } from '@/services/productMetadataService';
@@ -32,7 +33,9 @@ export const ProductMetadataForm: React.FC<ProductMetadataFormProps> = ({
     custom_presentation: initialData?.custom_presentation || '',
     category_id: initialData?.category_id || null,
     subcategory_id: initialData?.subcategory_id || null,
+    subsubcategory_id: initialData?.subsubcategory_id || null,
     presentation_id: initialData?.presentation_id || null,
+    duration_id: initialData?.duration_id || null,
     ai_description: initialData?.ai_description || '',
     search_keywords: initialData?.search_keywords || [],
     allergen_info: initialData?.allergen_info || [],
@@ -42,12 +45,14 @@ export const ProductMetadataForm: React.FC<ProductMetadataFormProps> = ({
   const {
     setSelectedCategory,
     setSelectedSubcategory,
+    setSelectedSubsubcategory,
     setSelectedPresentation,
     isValid: isCategoryValid,
     getCombination,
   } = useCategorization({
     initialCategoryId: initialData?.category_id || undefined,
     initialSubcategoryId: initialData?.subcategory_id || undefined,
+    initialSubsubcategoryId: initialData?.subsubcategory_id || undefined,
     initialPresentationId: initialData?.presentation_id || undefined,
     autoLoadOnMount: true,
   });
@@ -58,16 +63,14 @@ export const ProductMetadataForm: React.FC<ProductMetadataFormProps> = ({
   const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
 
-    // Validar categorización jerárquica
-    if (!isCategoryValid()) {
-      newErrors.categorization = 'Debe seleccionar categoría, subcategoría y presentación';
-    }
-
+    // Ya no validamos categorización como obligatoria - ahora es opcional
+    // Solo validamos la descripción de IA
     if (formData.ai_description && formData.ai_description.length > 500) {
       newErrors.ai_description = 'La descripción no puede exceder 500 caracteres';
     }
 
     // Validar combinación con el backend si está completa
+    // Solo si tienen valores seleccionados
     if (isCategoryValid()) {
       const combination = getCombination();
       if (combination) {
@@ -78,7 +81,7 @@ export const ProductMetadataForm: React.FC<ProductMetadataFormProps> = ({
           }
         } catch (err) {
           console.error('Error validating combination:', err);
-          newErrors.categorization = 'Error al validar la combinación de categorías';
+          // No mostramos error si la validación falla, solo advertencia en consola
         }
       }
     }
@@ -101,25 +104,63 @@ export const ProductMetadataForm: React.FC<ProductMetadataFormProps> = ({
       // Obtener la combinación de categorías seleccionadas
       const combination = getCombination();
 
-      // Preparar los datos completos con categorización jerárquica
-      const metadataToSave = {
+      // Preparar los datos completos con categorización jerárquica y duración
+      // Solo incluir campos que tienen valor (omitir los null)
+      const metadataToSave: Partial<CustomMetadata> = {
         ...formData,
-        category_id: combination?.category_id || null,
-        subcategory_id: combination?.subcategory_id || null,
-        presentation_id: combination?.presentation_id || null,
       };
 
-      // Primero guardar la categorización en el sistema de categorías
-      if (combination) {
-        try {
-          await categorizationService.categorizeProduct(productId, combination);
-        } catch (err) {
-          console.error('Error categorizing product:', err);
-          // Continuar aunque falle la categorización específica
-        }
+      // Solo agregar campos si tienen valores (no null/undefined)
+      if (combination?.category_id) {
+        metadataToSave.category_id = combination.category_id;
+      } else {
+        metadataToSave.category_id = null;
       }
 
-      // Luego guardar todos los metadatos
+      if (combination?.subcategory_id) {
+        metadataToSave.subcategory_id = combination.subcategory_id;
+      } else {
+        metadataToSave.subcategory_id = null;
+      }
+
+      if (combination?.subsubcategory_id) {
+        metadataToSave.subsubcategory_id = combination.subsubcategory_id;
+      } else {
+        metadataToSave.subsubcategory_id = null;
+      }
+
+      if (combination?.presentation_id) {
+        metadataToSave.presentation_id = combination.presentation_id;
+      } else {
+        metadataToSave.presentation_id = null;
+      }
+
+      if (formData.duration_id) {
+        metadataToSave.duration_id = formData.duration_id;
+      } else {
+        metadataToSave.duration_id = null;
+      }
+
+      // TEMPORALMENTE DESHABILITADO: No llamar a categorizeProduct
+      // porque tiene un bug en el backend con el campo created_by
+      // TODO: Habilitar cuando el backend arregle el UUID "system"
+
+      // if (combination &&
+      //     combination.category_id !== null &&
+      //     combination.subcategory_id !== null &&
+      //     combination.presentation_id !== null) {
+      //   try {
+      //     await categorizationService.categorizeProduct(productId, {
+      //       category_id: combination.category_id,
+      //       subcategory_id: combination.subcategory_id,
+      //       presentation_id: combination.presentation_id,
+      //     });
+      //   } catch (err) {
+      //     console.error('Error categorizing product:', err);
+      //   }
+      // }
+
+      // Guardar todos los metadatos directamente
       await onSave(metadataToSave);
     } catch (err) {
       console.error('Error saving metadata:', err);
@@ -188,9 +229,11 @@ export const ProductMetadataForm: React.FC<ProductMetadataFormProps> = ({
           <CategorySelector
             initialCategoryId={formData.category_id || undefined}
             initialSubcategoryId={formData.subcategory_id || undefined}
+            initialSubsubcategoryId={formData.subsubcategory_id || undefined}
             initialPresentationId={formData.presentation_id || undefined}
             onCategoryChange={(id) => setSelectedCategory(id)}
             onSubcategoryChange={(id) => setSelectedSubcategory(id)}
+            onSubsubcategoryChange={(id) => setSelectedSubsubcategory(id)}
             onPresentationChange={(id) => setSelectedPresentation(id)}
             disabled={saving}
             showLabels={true}
@@ -203,6 +246,30 @@ export const ProductMetadataForm: React.FC<ProductMetadataFormProps> = ({
             <p className="text-sm text-red-700 dark:text-red-300">{errors.categorization}</p>
           </div>
         )}
+
+        {/* Selector de Duración - Independiente de categorías */}
+        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+          <div className="flex items-start gap-2 mb-3">
+            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-purple-200 dark:bg-purple-700 flex items-center justify-center text-xs font-bold text-purple-700 dark:text-purple-200">
+              ⏱
+            </div>
+            <div className="flex-1">
+              <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+                Duración del Producto
+              </h5>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Indica la vida útil o tipo de almacenamiento requerido
+              </p>
+            </div>
+          </div>
+          <DurationSelector
+            value={formData.duration_id || null}
+            onChange={(durationId) => setFormData({ ...formData, duration_id: durationId })}
+            disabled={saving}
+            showLabel={false}
+            size="md"
+          />
+        </div>
 
         {/* Campos avanzados solo para administrador */}
         {mode === 'full' && (

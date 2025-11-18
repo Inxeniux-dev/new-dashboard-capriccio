@@ -5,9 +5,11 @@ import { useCategorization } from '@/hooks/useCategorization';
 interface CategorySelectorProps {
   initialCategoryId?: number;
   initialSubcategoryId?: number;
+  initialSubsubcategoryId?: number;
   initialPresentationId?: number;
   onCategoryChange?: (categoryId: number | null) => void;
   onSubcategoryChange?: (subcategoryId: number | null) => void;
+  onSubsubcategoryChange?: (subsubcategoryId: number | null) => void;
   onPresentationChange?: (presentationId: number | null) => void;
   disabled?: boolean;
   showLabels?: boolean;
@@ -17,9 +19,11 @@ interface CategorySelectorProps {
 export const CategorySelector: React.FC<CategorySelectorProps> = ({
   initialCategoryId,
   initialSubcategoryId,
+  initialSubsubcategoryId,
   initialPresentationId,
   onCategoryChange,
   onSubcategoryChange,
+  onSubsubcategoryChange,
   onPresentationChange,
   disabled = false,
   showLabels = true,
@@ -28,18 +32,22 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   const {
     categories,
     subcategories,
+    subsubcategories,
     presentations,
     loading,
     error,
     selectedCategory,
     selectedSubcategory,
+    selectedSubsubcategory,
     selectedPresentation,
     setSelectedCategory,
     setSelectedSubcategory,
+    setSelectedSubsubcategory,
     setSelectedPresentation,
   } = useCategorization({
     initialCategoryId,
     initialSubcategoryId,
+    initialSubsubcategoryId,
     initialPresentationId,
     autoLoadOnMount: true,
   });
@@ -54,6 +62,12 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
     const value = e.target.value ? Number(e.target.value) : null;
     setSelectedSubcategory(value);
     onSubcategoryChange?.(value);
+  };
+
+  const handleSubsubcategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value ? Number(e.target.value) : null;
+    setSelectedSubsubcategory(value);
+    onSubsubcategoryChange?.(value);
   };
 
   const handlePresentationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -86,7 +100,8 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
       <div>
         {showLabels && (
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Categoría <span className="text-red-500">*</span>
+            Categoría
+            <span className="text-gray-500 dark:text-gray-400 font-normal ml-1">(Opcional)</span>
           </label>
         )}
         <select
@@ -95,7 +110,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
           disabled={disabled || loading}
           className={selectClasses}
         >
-          <option value="">Seleccionar Categoría</option>
+          <option value="">Ninguno</option>
           {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>
               {cat.name}
@@ -111,18 +126,17 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
       <div>
         {showLabels && (
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Subcategoría <span className="text-red-500">*</span>
+            Subcategoría
+            <span className="text-gray-500 dark:text-gray-400 font-normal ml-1">(Opcional)</span>
           </label>
         )}
         <select
           value={selectedSubcategory || ''}
           onChange={handleSubcategoryChange}
-          disabled={disabled || loading || !selectedCategory}
+          disabled={disabled || loading}
           className={selectClasses}
         >
-          <option value="">
-            {selectedCategory ? 'Seleccionar Subcategoría' : 'Primero seleccione una categoría'}
-          </option>
+          <option value="">Ninguno</option>
           {subcategories.map((sub) => (
             <option key={sub.id} value={sub.id}>
               {sub.name}
@@ -136,24 +150,49 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
         )}
       </div>
 
+      {/* Sub-subcategoría */}
+      <div>
+        {showLabels && (
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Sub-subcategoría
+            <span className="text-gray-500 dark:text-gray-400 font-normal ml-1">(Opcional)</span>
+          </label>
+        )}
+        <select
+          value={selectedSubsubcategory || ''}
+          onChange={handleSubsubcategoryChange}
+          disabled={disabled || loading || !selectedSubcategory}
+          className={selectClasses}
+        >
+          <option value="">Ninguno</option>
+          {subsubcategories.map((subsub) => (
+            <option key={subsub.id} value={subsub.id}>
+              {subsub.name}
+            </option>
+          ))}
+        </select>
+        {loading && selectedSubcategory && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Cargando sub-subcategorías...
+          </p>
+        )}
+      </div>
+
       {/* Presentación */}
       <div>
         {showLabels && (
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Presentación <span className="text-red-500">*</span>
+            Presentación
+            <span className="text-gray-500 dark:text-gray-400 font-normal ml-1">(Opcional)</span>
           </label>
         )}
         <select
           value={selectedPresentation || ''}
           onChange={handlePresentationChange}
-          disabled={disabled || loading || !selectedSubcategory}
+          disabled={disabled || loading}
           className={selectClasses}
         >
-          <option value="">
-            {selectedSubcategory
-              ? 'Seleccionar Presentación'
-              : 'Primero seleccione una subcategoría'}
-          </option>
+          <option value="">Ninguno</option>
           {presentations.map((pres) => (
             <option key={pres.id} value={pres.id}>
               {pres.name}
@@ -169,29 +208,57 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
         )}
       </div>
 
-      {/* Indicador de selección completa */}
-      {selectedCategory && selectedSubcategory && selectedPresentation && (
-        <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-3">
+      {/* Indicador de selección */}
+      {(selectedCategory || selectedSubcategory || selectedSubsubcategory || selectedPresentation) && (
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
           <div className="flex items-center gap-2">
-            <span className="text-green-700 dark:text-green-300 text-sm font-medium">
-              ✓ Categorización completa
+            <span className="text-blue-700 dark:text-blue-300 text-sm font-medium">
+              📋 Categorización seleccionada
             </span>
           </div>
-          <div className="text-xs text-green-600 dark:text-green-400 mt-1 space-y-0.5">
-            <p>
-              <span className="font-medium">Categoría:</span>{' '}
-              {categories.find((c) => c.id === selectedCategory)?.name}
-            </p>
-            <p>
-              <span className="font-medium">Subcategoría:</span>{' '}
-              {subcategories.find((s) => s.id === selectedSubcategory)?.name}
-            </p>
-            <p>
-              <span className="font-medium">Presentación:</span>{' '}
-              {presentations.find((p) => p.id === selectedPresentation)?.name}
-              {presentations.find((p) => p.id === selectedPresentation)?.size_info &&
-                ` (${presentations.find((p) => p.id === selectedPresentation)?.size_info})`}
-            </p>
+          <div className="text-xs text-blue-600 dark:text-blue-400 mt-1 space-y-0.5">
+            {selectedCategory ? (
+              <p>
+                <span className="font-medium">Categoría:</span>{' '}
+                {categories.find((c) => c.id === selectedCategory)?.name}
+              </p>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">
+                <span className="font-medium">Categoría:</span> Ninguno
+              </p>
+            )}
+            {selectedSubcategory ? (
+              <p>
+                <span className="font-medium">Subcategoría:</span>{' '}
+                {subcategories.find((s) => s.id === selectedSubcategory)?.name}
+              </p>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">
+                <span className="font-medium">Subcategoría:</span> Ninguno
+              </p>
+            )}
+            {selectedSubsubcategory ? (
+              <p>
+                <span className="font-medium">Sub-subcategoría:</span>{' '}
+                {subsubcategories.find((ss) => ss.id === selectedSubsubcategory)?.name}
+              </p>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">
+                <span className="font-medium">Sub-subcategoría:</span> Ninguno
+              </p>
+            )}
+            {selectedPresentation ? (
+              <p>
+                <span className="font-medium">Presentación:</span>{' '}
+                {presentations.find((p) => p.id === selectedPresentation)?.name}
+                {presentations.find((p) => p.id === selectedPresentation)?.size_info &&
+                  ` (${presentations.find((p) => p.id === selectedPresentation)?.size_info})`}
+              </p>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">
+                <span className="font-medium">Presentación:</span> Ninguno
+              </p>
+            )}
           </div>
         </div>
       )}
