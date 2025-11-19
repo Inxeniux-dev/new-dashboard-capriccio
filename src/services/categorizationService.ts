@@ -193,9 +193,10 @@ class CategorizationService {
    * Valida una combinación de categoría, subcategoría y presentación
    */
   async validateCombination(data: {
-    category_id: number;
-    subcategory_id: number;
-    presentation_id: number;
+    category_id: number | null;
+    subcategory_id: number | null;
+    subsubcategory_id?: number | null;
+    presentation_id: number | null;
   }): Promise<ValidationResult> {
     const response = await fetch(`${API_BASE_URL}/api/categories/validate`, {
       method: 'POST',
