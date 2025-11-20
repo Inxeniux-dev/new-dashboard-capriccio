@@ -18,6 +18,7 @@ export interface Subcategory {
   id: number;
   code: string;
   name: string;
+  description?: string;
   category_id: number;
   display_order?: number;
   is_active: boolean;
@@ -71,6 +72,9 @@ export interface CategoryHierarchy {
     id: number;
     name: string;
     code: string;
+    description?: string;
+    display_order?: number;
+    is_active?: boolean;
     presentations: {
       id: number;
       name: string;

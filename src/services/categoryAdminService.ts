@@ -31,6 +31,7 @@ export interface UpdateCategoryData {
 export interface CreateSubcategoryData {
   code: string;
   name: string;
+  description?: string;
   category_id: number;
   display_order?: number;
 }
@@ -38,6 +39,7 @@ export interface CreateSubcategoryData {
 export interface UpdateSubcategoryData {
   code?: string;
   name?: string;
+  description?: string;
   category_id?: number;
   display_order?: number;
   is_active?: boolean;

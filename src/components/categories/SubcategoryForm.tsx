@@ -28,6 +28,7 @@ export const SubcategoryForm: React.FC<SubcategoryFormProps> = ({
   const [formData, setFormData] = useState({
     code: subcategory?.code || '',
     name: subcategory?.name || '',
+    description: subcategory?.description || '',
     category_id: subcategory?.category_id || preselectedCategoryId || 0,
     display_order: subcategory?.display_order || 0,
   });
@@ -165,6 +166,21 @@ export const SubcategoryForm: React.FC<SubcategoryFormProps> = ({
         {errors.name && (
           <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name}</p>
         )}
+      </div>
+
+      {/* Descripción */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Descripción
+        </label>
+        <textarea
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+          placeholder="Descripción de la subcategoría (opcional)"
+          rows={3}
+          disabled={saving}
+        />
       </div>
 
       {/* Orden de visualización */}

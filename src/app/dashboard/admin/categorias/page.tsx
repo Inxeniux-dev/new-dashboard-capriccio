@@ -80,8 +80,10 @@ export default function CategoryAdminPage() {
             id: sub.id,
             code: sub.code,
             name: sub.name,
+            description: sub.description,
             category_id: cat.id,
-            is_active: true,
+            display_order: sub.display_order,
+            is_active: sub.is_active ?? true,
           });
         });
       });
@@ -705,6 +707,9 @@ export default function CategoryAdminPage() {
                       Nombre
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Descripción
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Orden
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -729,6 +734,9 @@ export default function CategoryAdminPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                           {subcategory.name}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                          {subcategory.description || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                           {subcategory.display_order || 0}
