@@ -1,5 +1,6 @@
-// Servicio para gestionar la categorización jerárquica de productos
+// Servicio para gestionar la categorización de productos
 // Integración con el sistema de categorización del backend
+// NOTA: El sistema de subcategorías ha sido reemplazado por componentes
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 const API_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || '';
@@ -14,32 +15,13 @@ export interface Category {
   is_active: boolean;
 }
 
-export interface Subcategory {
-  id: number;
-  code: string;
-  name: string;
-  category_id: number;
-  display_order?: number;
-  is_active: boolean;
-}
-
-export interface Subsubcategory {
-  id: number;
-  code: string;
-  name: string;
-  subcategory_id: number;
-  description?: string;
-  display_order?: number;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
 export interface Presentation {
   id: number;
   code: string;
   name: string;
-  size_info?: string;
+  description?: string | null;
+  size_info?: string | null;
+  display_order?: number;
   is_default: boolean;
   is_active: boolean;
 }
@@ -57,46 +39,20 @@ export interface Duration {
 
 export interface CategoryOptions {
   categories: Category[];
-  subcategories: Subcategory[];
-  subsubcategories: Subsubcategory[];
   presentations: Presentation[];
   durations?: Duration[];
-}
-
-export interface CategoryHierarchy {
-  id: number;
-  name: string;
-  code: string;
-  subcategories: {
-    id: number;
-    name: string;
-    code: string;
-    presentations: {
-      id: number;
-      name: string;
-      code: string;
-      size_info?: string;
-    }[];
-  }[];
 }
 
 export interface ProductCategorization {
   product_id: string;
   category_id: number;
-  subcategory_id: number;
-  subsubcategory_id?: number; // Nuevo campo opcional
   presentation_id: number;
   product_categories?: {
     name: string;
   };
-  product_subcategories?: {
-    name: string;
-  };
-  product_subsubcategories?: {
-    name: string;
-  };
   product_presentations?: {
     name: string;
+    description?: string;
     size_info?: string;
   };
 }
@@ -136,12 +92,11 @@ class CategorizationService {
   }
 
   /**
-   * Obtiene opciones dinámicas basadas en la selección actual
-   * Este es el endpoint RECOMENDADO para implementar la selección en cascada
+   * Obtiene opciones dinámicas para categorización
+   * Simplificado - ya no hay subcategorías
    */
   async getOptions(params?: {
     category_id?: number;
-    subcategory_id?: number;
   }): Promise<{
     success: boolean;
     data: CategoryOptions;
@@ -149,9 +104,6 @@ class CategorizationService {
     const queryParams = new URLSearchParams();
     if (params?.category_id) {
       queryParams.append('category_id', params.category_id.toString());
-    }
-    if (params?.subcategory_id) {
-      queryParams.append('subcategory_id', params.subcategory_id.toString());
     }
 
     const response = await fetch(
@@ -170,32 +122,10 @@ class CategorizationService {
   }
 
   /**
-   * Obtiene la jerarquía completa de categorías
-   * Útil para mostrar un árbol completo o para caché inicial
-   */
-  async getHierarchy(): Promise<{
-    success: boolean;
-    data: CategoryHierarchy[];
-  }> {
-    const response = await fetch(`${API_BASE_URL}/api/categories/hierarchy`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch category hierarchy: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Valida una combinación de categoría, subcategoría y presentación
+   * Valida una combinación de categoría y presentación
    */
   async validateCombination(data: {
     category_id: number | null;
-    subcategory_id: number | null;
-    subsubcategory_id?: number | null;
     presentation_id: number | null;
   }): Promise<ValidationResult> {
     const response = await fetch(`${API_BASE_URL}/api/categories/validate`, {
@@ -223,7 +153,6 @@ class CategorizationService {
     productId: string,
     data: {
       category_id: number;
-      subcategory_id: number;
       presentation_id: number;
     }
   ): Promise<{
@@ -251,15 +180,11 @@ class CategorizationService {
   }
 
   /**
-   * Obtiene sub-subcategorías de una subcategoría
+   * Obtiene todas las presentaciones disponibles
    */
-  async getSubsubcategories(
-    subcategoryId: number,
-    activeOnly: boolean = true
-  ): Promise<{
+  async getAllPresentations(activeOnly: boolean = true): Promise<{
     success: boolean;
-    count: number;
-    data: Subsubcategory[];
+    data: Presentation[];
   }> {
     const queryParams = new URLSearchParams();
     if (activeOnly) {
@@ -267,53 +192,12 @@ class CategorizationService {
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/categories/subcategories/${subcategoryId}/subsubcategories?${queryParams.toString()}`,
+      `${API_BASE_URL}/api/categories/presentations?${queryParams.toString()}`,
       {
         method: 'GET',
         headers: this.getHeaders(),
       }
     );
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch sub-subcategories: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Obtiene una sub-subcategoría por ID
-   */
-  async getSubsubcategoryById(id: number): Promise<{
-    success: boolean;
-    data: Subsubcategory;
-  }> {
-    const response = await fetch(
-      `${API_BASE_URL}/api/categories/subsubcategories/${id}`,
-      {
-        method: 'GET',
-        headers: this.getHeaders(),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch sub-subcategory: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Obtiene todas las presentaciones disponibles
-   */
-  async getAllPresentations(): Promise<{
-    success: boolean;
-    data: Presentation[];
-  }> {
-    const response = await fetch(`${API_BASE_URL}/api/categories/presentations`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch presentations: ${response.statusText}`);
@@ -374,7 +258,6 @@ class CategorizationService {
    */
   async getProductsByCategory(params?: {
     category_id?: number;
-    subcategory_id?: number;
     presentation_id?: number;
   }): Promise<{
     success: boolean;
@@ -383,9 +266,6 @@ class CategorizationService {
     const queryParams = new URLSearchParams();
     if (params?.category_id) {
       queryParams.append('category_id', params.category_id.toString());
-    }
-    if (params?.subcategory_id) {
-      queryParams.append('subcategory_id', params.subcategory_id.toString());
     }
     if (params?.presentation_id) {
       queryParams.append('presentation_id', params.presentation_id.toString());

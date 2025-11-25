@@ -55,7 +55,6 @@ export const useEnrichedProducts = (
   }, [
     params.search,
     params.category,
-    params.subcategory,
     params.presentation,
     params.limit,
     params.offset,

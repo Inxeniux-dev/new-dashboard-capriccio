@@ -1,25 +1,54 @@
 // Servicio para gestionar metadatos personalizados de productos
 // Integración con el sistema de metadatos de iPOS
 
+import type { ProductComponent } from './componentService';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 const API_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || '';
+
+// Interfaces para categorías y presentaciones expandidas
+interface ProductCategory {
+  id: number;
+  code: string;
+  name: string;
+}
+
+interface ProductPresentation {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  size_info: string | null;
+  display_order?: number;
+  is_active?: boolean;
+}
+
+interface ProductDuration {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+}
 
 interface CustomMetadata {
   id?: number;
   product_id: string;
   custom_category?: string | null;
-  custom_subcategory?: string | null;
   custom_presentation?: string | null;
   ai_description?: string | null;
   search_keywords?: string[] | null;
   allergen_info?: string[] | null;
-  // Nuevos campos para categorización jerárquica
+  // Campos para categorización (sin subcategorías)
   category_id?: number | null;
-  subcategory_id?: number | null;
-  subsubcategory_id?: number | null;
   presentation_id?: number | null;
   // Campo de duración (independiente de categorías)
   duration_id?: number | null;
+  // Relaciones expandidas
+  product_categories?: ProductCategory;
+  product_presentations?: ProductPresentation;
+  product_durations?: ProductDuration;
+  // Componentes (nuevo sistema - reemplaza subcategorías)
+  components?: ProductComponent[];
   created_at?: string;
   updated_at?: string;
 }
@@ -32,15 +61,15 @@ interface EnrichedProduct {
   status: string;
   price?: number;
   category?: string;
-  subcategory?: string;
   image_url?: string;
   custom_metadata: CustomMetadata | null;
+  // Componentes del producto (nuevo sistema)
+  components?: ProductComponent[];
 }
 
 interface GetProductsParams {
   search?: string;
   category?: string;
-  subcategory?: string;
   presentation?: string;
   limit?: number;
   offset?: number;
@@ -48,10 +77,14 @@ interface GetProductsParams {
   onlyWithMetadata?: boolean; // Filtrar solo productos con custom_metadata
 }
 
+// Opciones para dropdowns - actualizado con componentOptions
 interface MetadataOptions {
   categories: string[];
-  subcategories: string[];
   presentations: string[];
+  categoryOptions: ProductCategory[];
+  presentationOptions: ProductPresentation[];
+  durationOptions: ProductDuration[];
+  componentOptions: ProductComponent[];
 }
 
 interface BatchUpdateItem {
@@ -94,7 +127,6 @@ class ProductMetadataService {
 
     if (params.search) queryParams.append('search', params.search);
     if (params.category) queryParams.append('category', params.category);
-    if (params.subcategory) queryParams.append('subcategory', params.subcategory);
     if (params.presentation) queryParams.append('presentation', params.presentation);
     if (params.limit) queryParams.append('limit', params.limit.toString());
     if (params.offset) queryParams.append('offset', params.offset.toString());
@@ -332,4 +364,7 @@ export type {
   MetadataOptions,
   BatchUpdateItem,
   BatchUpdateResponse,
+  ProductCategory,
+  ProductPresentation,
+  ProductDuration,
 };

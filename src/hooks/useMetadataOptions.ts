@@ -1,4 +1,4 @@
-// Hook para obtener opciones de metadatos (categorías, subcategorías, presentaciones)
+// Hook para obtener opciones de metadatos (categorías, presentaciones, componentes)
 import { useState, useEffect } from 'react';
 import {
   productMetadataService,
@@ -15,8 +15,11 @@ interface UseMetadataOptionsReturn {
 export const useMetadataOptions = (): UseMetadataOptionsReturn => {
   const [options, setOptions] = useState<MetadataOptions>({
     categories: [],
-    subcategories: [],
     presentations: [],
+    categoryOptions: [],
+    presentationOptions: [],
+    durationOptions: [],
+    componentOptions: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

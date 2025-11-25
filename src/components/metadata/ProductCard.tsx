@@ -1,4 +1,5 @@
 // Tarjeta de producto con metadatos
+// Actualizado: Muestra componentes en lugar de subcategorías
 import React from 'react';
 import { MetadataBadge } from './MetadataBadge';
 import type { EnrichedProduct } from '@/services/productMetadataService';
@@ -27,6 +28,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       onDelete(product.product_id);
     }
   };
+
+  // Obtener componentes del producto (pueden venir de custom_metadata o del producto)
+  const components = product.components || product.custom_metadata?.components || [];
 
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
@@ -57,22 +61,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     value={product.custom_metadata.custom_category}
                   />
                 )}
-                {product.custom_metadata.custom_subcategory && (
-                  <MetadataBadge
-                    type="subcategory"
-                    value={product.custom_metadata.custom_subcategory}
-                  />
-                )}
                 {product.custom_metadata.custom_presentation && (
                   <MetadataBadge
                     type="presentation"
                     value={product.custom_metadata.custom_presentation}
                   />
                 )}
+                {/* Mostrar componentes */}
+                {components.length > 0 && (
+                  <span className="inline-flex items-center px-2 py-1 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 text-xs rounded-full border border-teal-200 dark:border-teal-800">
+                    {components.length} componente{components.length !== 1 ? 's' : ''}
+                  </span>
+                )}
               </>
             ) : (
               <span className="inline-flex items-center px-2 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs rounded-full border border-amber-200 dark:border-amber-800">
-                ⚠️ Sin metadatos
+                Sin metadatos
               </span>
             )}
 
@@ -83,6 +87,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               size="sm"
             />
           </div>
+
+          {/* Lista de componentes (preview) */}
+          {components.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {components.slice(0, 3).map((comp) => (
+                <span
+                  key={comp.id}
+                  className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded"
+                  title={comp.description || undefined}
+                >
+                  {comp.name}
+                </span>
+              ))}
+              {components.length > 3 && (
+                <span className="text-xs px-1.5 py-0.5 text-gray-500 dark:text-gray-400">
+                  +{components.length - 3} más
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Acciones */}
