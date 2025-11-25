@@ -5,7 +5,11 @@
       "Bash(npx tsc:*)",
       "Bash(cat:*)",
       "Bash(git stash:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)",
+      "Bash(git rm:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
