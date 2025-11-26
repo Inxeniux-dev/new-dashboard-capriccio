@@ -2,7 +2,9 @@
 
 // Página de administración de componentes de productos
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { toast } from 'sonner';
+import { ChevronLeft, ChevronRight, Home } from 'lucide-react';
 import { componentService, type ProductComponent, type CreateComponentData, type UpdateComponentData } from '@/services/componentService';
 import { Modal } from '@/components/metadata/Modal';
 
@@ -137,6 +139,36 @@ export default function ComponentsAdminPage() {
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
+      {/* Breadcrumbs */}
+      <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <Link
+          href="/dashboard"
+          className="flex items-center hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+        >
+          <Home className="w-4 h-4" />
+        </Link>
+        <ChevronRight className="w-4 h-4" />
+        <Link
+          href="/dashboard/admin/categorias"
+          className="hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+        >
+          Categorías
+        </Link>
+        <ChevronRight className="w-4 h-4" />
+        <span className="text-gray-900 dark:text-gray-100 font-medium">
+          Componentes
+        </span>
+      </nav>
+
+      {/* Botón de regreso */}
+      <Link
+        href="/dashboard/admin/categorias"
+        className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-4"
+      >
+        <ChevronLeft className="w-5 h-5" />
+        <span>Volver a Gestión de Categorías</span>
+      </Link>
+
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
