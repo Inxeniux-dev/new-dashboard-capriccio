@@ -180,10 +180,20 @@ export function AIAnalysisPanel({
  * Función simple para convertir markdown básico a HTML
  * Soporta: headers, listas, negrita, énfasis
  */
-function formatMarkdown(text: string): string {
+function formatMarkdown(text: unknown): string {
   if (!text) return "";
 
-  let html = text;
+  // Si no es string (puede venir como objeto/array del API), convertir
+  let html: string;
+  if (typeof text === "string") {
+    html = text;
+  } else if (Array.isArray(text)) {
+    html = text.map((item) => (typeof item === "string" ? item : JSON.stringify(item))).join("\n");
+  } else if (typeof text === "object") {
+    html = JSON.stringify(text, null, 2);
+  } else {
+    html = String(text);
+  }
 
   // Headers
   html = html.replace(/^### (.+)$/gm, "<h3 class='font-semibold text-sm mt-3 mb-2'>$1</h3>");

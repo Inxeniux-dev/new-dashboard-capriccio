@@ -102,25 +102,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: unknown) {
       console.error("Login error:", error);
 
-      // Mostrar mensaje de error apropiado
-      const err = error as { status?: number; message?: string };
+      const err = error as { status?: number; message?: string; code?: string };
 
-      if (err.status === 401) {
-        toast.error("Credenciales incorrectas", {
-          description: "El email o la contraseña no son válidos.",
-        });
-      } else if (err.status === 500) {
-        toast.error("Error del servidor", {
-          description: "Hubo un problema con el servidor. Intenta de nuevo más tarde.",
-        });
-      } else if (err.message === "Error de conexión con el servidor") {
-        toast.error("Sin conexión", {
-          description: "No se pudo conectar con el servidor. Verifica tu conexión.",
-        });
-      } else {
-        toast.error("Error al iniciar sesión", {
-          description: err.message || "Ocurrió un error inesperado. Intenta de nuevo.",
-        });
+      switch (err.code) {
+        case "INVALID_TOKEN":
+        case "AUTH_REQUIRED":
+          toast.error("Credenciales incorrectas", {
+            description: err.message || "El email o la contraseña no son válidos.",
+          });
+          break;
+        case "VALIDATION_ERROR":
+        case "MISSING_FIELD":
+          toast.error("Datos incompletos", {
+            description: err.message || "Verifica los campos del formulario.",
+          });
+          break;
+        case "RATE_LIMIT":
+          toast.error("Demasiadas solicitudes", {
+            description: err.message || "Espera un momento antes de intentar de nuevo.",
+          });
+          break;
+        case "INTERNAL_ERROR":
+        case "DATABASE_ERROR":
+          toast.error("Error del servidor", {
+            description: err.message || "Hubo un problema con el servidor. Intenta de nuevo más tarde.",
+          });
+          break;
+        default:
+          // Usar el mensaje del backend si existe (ya viene en español)
+          toast.error("Error al iniciar sesión", {
+            description: err.message || "Ocurrió un error inesperado. Intenta de nuevo.",
+          });
+          break;
       }
 
       throw error;

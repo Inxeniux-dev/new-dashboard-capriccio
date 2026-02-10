@@ -46,7 +46,8 @@ class ApiError extends Error {
   constructor(
     public status: number,
     public message: string,
-    public details?: string
+    public code?: string,
+    public details?: string | Record<string, unknown> | Array<{ field: string; message: string }>
   ) {
     super(message);
     this.name = "ApiError";
@@ -87,7 +88,9 @@ async function fetchApi<T>(
       const error = data as ErrorResponse;
 
       // Manejar errores de autenticación (401)
-      if (response.status === 401 && typeof window !== "undefined") {
+      // Usar códigos del backend para decidir: AUTH_REQUIRED, INVALID_TOKEN, TOKEN_EXPIRED
+      const isAuthError = ["AUTH_REQUIRED", "INVALID_TOKEN", "TOKEN_EXPIRED"].includes(error.error);
+      if (isAuthError && typeof window !== "undefined" && !endpoint.includes("/auth/login")) {
         // Token inválido o expirado - intentar renovar con refresh token
         const refreshToken = localStorage.getItem("refresh_token");
 
@@ -147,12 +150,13 @@ async function fetchApi<T>(
         }
 
         // Retornar promesa rechazada
-        return Promise.reject(new ApiError(401, "Sesión expirada", "auth_redirect")) as Promise<T>;
+        return Promise.reject(new ApiError(401, "Sesión expirada", "TOKEN_EXPIRED")) as Promise<T>;
       }
 
       throw new ApiError(
         response.status,
         error.message || "Error en la petición",
+        error.error,
         error.details
       );
     }
@@ -162,7 +166,7 @@ async function fetchApi<T>(
     if (error instanceof ApiError) {
       throw error;
     }
-    throw new ApiError(500, "Error de conexión con el servidor");
+    throw new ApiError(500, "Error de conexión con el servidor", "INTERNAL_ERROR");
   }
 }
 

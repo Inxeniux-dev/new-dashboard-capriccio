@@ -23,12 +23,16 @@ export interface ApiResponse<T = unknown> {
   ipos_order_id?: string;
 }
 
-export interface ErrorResponse {
-  error: string;
+export interface ValidationDetail {
+  field: string;
   message: string;
-  details?: string;
-  code?: string;
-  timestamp?: string;
+}
+
+export interface ErrorResponse {
+  success: false;
+  message: string;
+  error: string;
+  details?: string | ValidationDetail[] | Record<string, unknown>;
 }
 
 export interface PaginationResponse {
