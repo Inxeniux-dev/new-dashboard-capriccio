@@ -294,6 +294,7 @@ class ProductMetadataService {
       newProducts: number;
       updatedProducts: number;
       preservedMetadata: number;
+      total: number;
     };
   }> {
     const response = await fetch(
@@ -308,7 +309,20 @@ class ProductMetadataService {
       throw new Error(`Failed to sync products: ${response.statusText}`);
     }
 
-    return response.json();
+    const json = await response.json();
+
+    // Normalizar respuesta: el backend devuelve stats.inserted/updated
+    const stats = json.stats || json.data || {};
+    return {
+      success: json.success,
+      message: json.message,
+      data: {
+        newProducts: stats.inserted ?? stats.newProducts ?? 0,
+        updatedProducts: stats.updated ?? stats.updatedProducts ?? 0,
+        preservedMetadata: stats.preservedMetadata ?? 0,
+        total: stats.total ?? 0,
+      },
+    };
   }
 
   /**

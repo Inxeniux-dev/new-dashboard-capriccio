@@ -29,15 +29,17 @@ export default function ProductMetadataAdminPage() {
       newProducts?: number;
       updatedProducts?: number;
       preservedMetadata?: number;
+      total?: number;
     };
   } | null>(null);
 
   const { options } = useMetadataOptions();
-  const { products, loading, error, refetch } = useEnrichedProducts({
+  const { products, loading, error, refetch, totalCount } = useEnrichedProducts({
     search,
     category: selectedCategory,
     presentation: selectedPresentation,
     includeInactive,
+    limit: 500,
   });
 
   // Filtrar productos sin metadatos si está activado
@@ -83,15 +85,7 @@ export default function ProductMetadataAdminPage() {
     }
   };
 
-  const handleSyncIpos = async () => {
-    if (
-      !confirm(
-        '¿Deseas sincronizar productos desde iPOS?\n\nLos metadatos personalizados se preservarán durante la sincronización.'
-      )
-    ) {
-      return;
-    }
-
+  const performSync = async () => {
     setSyncInProgress(true);
     setSyncResult(null);
 
@@ -108,6 +102,21 @@ export default function ProductMetadataAdminPage() {
     } finally {
       setSyncInProgress(false);
     }
+  };
+
+  const handleSyncIpos = () => {
+    toast('¿Sincronizar productos desde iPOS?', {
+      description: 'Los metadatos personalizados se preservarán durante la sincronización.',
+      duration: Infinity,
+      action: {
+        label: 'Sincronizar',
+        onClick: performSync,
+      },
+      cancel: {
+        label: 'Cancelar',
+        onClick: () => {},
+      },
+    });
   };
 
   const handleClearFilters = () => {
@@ -272,7 +281,7 @@ export default function ProductMetadataAdminPage() {
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Productos ({filteredProducts.length})
+                Productos ({filteredProducts.length}{totalCount > filteredProducts.length ? ` de ${totalCount}` : ''})
               </h2>
             </div>
 
@@ -349,6 +358,9 @@ export default function ProductMetadataAdminPage() {
                 ✅ Sincronización exitosa
               </p>
               <div className="space-y-1 text-sm text-green-700 dark:text-green-300">
+                {(syncResult.data?.total ?? 0) > 0 && (
+                  <p>• Total procesados desde iPOS: {syncResult.data?.total}</p>
+                )}
                 <p>• Productos nuevos: {syncResult.data?.newProducts || 0}</p>
                 <p>• Productos actualizados: {syncResult.data?.updatedProducts || 0}</p>
                 <p>• Metadatos preservados: {syncResult.data?.preservedMetadata || 0}</p>

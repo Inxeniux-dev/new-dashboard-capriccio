@@ -11,7 +11,11 @@
       "Bash(git rm:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(python3 -m json.tool)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''count:'', d.get\\(''count''\\), ''data_len:'', len\\(d.get\\(''data'', []\\)\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''Total después del sync:'', d.get\\(''count''\\), ''| data_len:'', len\\(d.get\\(''data'', []\\)\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''Total con inactivos:'', d.get\\(''count''\\), ''| data_len:'', len\\(d.get\\(''data'', []\\)\\)\\)\")"
     ],
     "deny": [],
     "ask": []
