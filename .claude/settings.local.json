@@ -15,7 +15,12 @@
       "Bash(python3 -m json.tool)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''count:'', d.get\\(''count''\\), ''data_len:'', len\\(d.get\\(''data'', []\\)\\)\\)\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''Total después del sync:'', d.get\\(''count''\\), ''| data_len:'', len\\(d.get\\(''data'', []\\)\\)\\)\")",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''Total con inactivos:'', d.get\\(''count''\\), ''| data_len:'', len\\(d.get\\(''data'', []\\)\\)\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''Total con inactivos:'', d.get\\(''count''\\), ''| data_len:'', len\\(d.get\\(''data'', []\\)\\)\\)\")",
+      "Bash(find /Users/dramirez/Development/Inxeniux/Capriccio/new-dashboard-capriccio -type f -name *ai*config* -o -name *ai*Config*)",
+      "Bash(find /Users/dramirez/Development/Inxeniux/Capriccio/new-dashboard-capriccio/src/lib -type f -name *.ts)",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS: %{http_code}\" http://localhost:4000/api/ai/config)",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS: %{http_code}\" -X PUT http://localhost:4000/api/ai/config -H \"Content-Type: application/json\" -d '{\"\"\"\"temperature\"\"\"\": 0.5}')",
+      "Bash(curl -v -X PUT http://localhost:4000/api/ai/config -H \"Content-Type: application/json\" -d '{\"\"temperature\"\": 0.5}')"
     ],
     "deny": [],
     "ask": []

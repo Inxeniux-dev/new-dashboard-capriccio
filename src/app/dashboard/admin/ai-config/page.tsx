@@ -1,65 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRequireAuth } from "@/contexts/AuthContext";
+import apiClient from "@/lib/api-client";
+import type { AIConfig, AIAuditEntry, AIBusinessHoursStatus } from "@/types/api";
+import { toast } from "sonner";
 import {
-  Bot, Brain, Settings, MessageSquare, Sparkles, Shield,
-  Save, AlertCircle, Copy, Eye, EyeOff,
-  RefreshCw, Zap, Clock, ToggleLeft, ToggleRight
+  Bot, Settings, MessageSquare, Sparkles,
+  Save, AlertCircle, RefreshCw, Zap, Clock, ToggleLeft, ToggleRight,
+  Loader2, History, ChevronLeft, ChevronRight
 } from "lucide-react";
 
-interface AIConfig {
-  id: string;
-  name: string;
-  enabled: boolean;
-  model: string;
-  temperature: number;
-  max_tokens: number;
-  system_prompt: string;
-  welcome_message: string;
-  fallback_message: string;
-  response_delay: number;
-  language: string;
-  platforms: string[];
-  business_hours: {
-    enabled: boolean;
-    schedule: Record<string, { start: string; end: string; enabled: boolean }>;
-    offline_message: string;
-  };
-  features: {
-    auto_reply: boolean;
-    order_tracking: boolean;
-    product_info: boolean;
-    price_quotes: boolean;
-    appointment_booking: boolean;
-    faq_responses: boolean;
-  };
-  knowledge_base: {
-    products: boolean;
-    services: boolean;
-    policies: boolean;
-    custom_docs: string[];
-  };
-}
-
 const defaultConfig: AIConfig = {
-  id: "1",
+  id: 0,
   name: "Asistente Capriccio",
   enabled: true,
-  model: "gpt-4",
+  model: "gpt-4o-mini",
   temperature: 0.7,
   max_tokens: 500,
-  system_prompt: `Eres un asistente virtual de Capriccio, una empresa de productos caseros de alta calidad.
-Tu objetivo es ayudar a los clientes con sus consultas sobre productos, pedidos y servicios.
-Mantén un tono amigable, profesional y servicial.
-Siempre proporciona información precisa y actualizada.`,
-  welcome_message: "¡Hola! 👋 Soy el asistente virtual de Capriccio. ¿En qué puedo ayudarte hoy?",
-  fallback_message: "Lo siento, no entendí tu mensaje. ¿Podrías reformularlo o ser más específico?",
+  system_prompt: "",
+  welcome_message: "",
+  fallback_message: "",
   response_delay: 1000,
   language: "es",
-  platforms: ["whatsapp", "messenger", "instagram"],
+  platforms: ["whatsapp"],
   business_hours: {
-    enabled: true,
+    enabled: false,
     schedule: {
       monday: { start: "09:00", end: "18:00", enabled: true },
       tuesday: { start: "09:00", end: "18:00", enabled: true },
@@ -69,7 +35,7 @@ Siempre proporciona información precisa y actualizada.`,
       saturday: { start: "09:00", end: "14:00", enabled: true },
       sunday: { start: "00:00", end: "00:00", enabled: false },
     },
-    offline_message: "Nuestro horario de atención es de lunes a viernes de 9:00 a 18:00 y sábados de 9:00 a 14:00. Te responderemos a la brevedad.",
+    offline_message: "",
   },
   features: {
     auto_reply: true,
@@ -85,79 +51,200 @@ Siempre proporciona información precisa y actualizada.`,
     policies: true,
     custom_docs: [],
   },
+  created_at: "",
+  updated_at: "",
+};
+
+const PLATFORMS = ["whatsapp", "messenger", "instagram", "facebook"] as const;
+
+const ACTION_LABELS: Record<string, string> = {
+  dashboard_updated: "Configuración actualizada",
+  enabled: "IA activada",
+  disabled: "IA desactivada",
+  updated: "Actualización",
+  test_run: "Prueba ejecutada",
+  api_key_updated: "API Key actualizada",
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  temperature: "Temperatura",
+  max_tokens: "Tokens máximos",
+  system_prompt: "System Prompt",
+  welcome_message: "Mensaje de bienvenida",
+  fallback_message: "Mensaje de fallback",
+  response_delay: "Retraso de respuesta",
+  language: "Idioma",
+  model: "Modelo",
+  name: "Nombre",
+  enabled: "Estado",
+  platforms: "Plataformas",
+  business_hours: "Horario de atención",
+  features: "Funciones",
+  knowledge_base: "Base de conocimiento",
 };
 
 export default function AIConfigPage() {
   const { loading } = useRequireAuth(["admin"]);
   const [config, setConfig] = useState<AIConfig>(defaultConfig);
   const [saving, setSaving] = useState(false);
+  const [loadingConfig, setLoadingConfig] = useState(true);
   const [testMessage, setTestMessage] = useState("");
   const [testResponse, setTestResponse] = useState("");
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [apiKey, setApiKey] = useState("sk-............................");
-  const [activeTab, setActiveTab] = useState<"general" | "prompt" | "features" | "schedule" | "test">("general");
+  const [testMeta, setTestMeta] = useState<{ model: string; tokens_used: number; response_time_ms: number } | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [activeTab, setActiveTab] = useState<"general" | "prompt" | "features" | "schedule" | "test" | "audit">("general");
+
+  // Business hours status
+  const [hoursStatus, setHoursStatus] = useState<AIBusinessHoursStatus | null>(null);
+
+  // Audit
+  const [auditLog, setAuditLog] = useState<AIAuditEntry[]>([]);
+  const [auditCount, setAuditCount] = useState(0);
+  const [auditOffset, setAuditOffset] = useState(0);
+  const [loadingAudit, setLoadingAudit] = useState(false);
+  const auditLimit = 10;
+
+  // Platform toggle loading
+  const [togglingPlatform, setTogglingPlatform] = useState<string | null>(null);
 
   useEffect(() => {
     loadConfig();
+    loadBusinessHoursStatus();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === "audit") {
+      loadAuditLog();
+    }
+  }, [activeTab, auditOffset]);
 
   const loadConfig = async () => {
     try {
-      // En producción, cargaría desde la API
-      // const response = await apiClient.ai.getConfig();
-      // setConfig(response.data);
-
-      // Por ahora usamos config por defecto
-      setConfig(defaultConfig);
+      setLoadingConfig(true);
+      const response = await apiClient.ai.getConfig();
+      if (response.success && response.data) {
+        setConfig(response.data);
+      }
     } catch (error) {
       console.error("Error loading AI config:", error);
+      toast.error("Error al cargar la configuración de IA");
+    } finally {
+      setLoadingConfig(false);
     }
   };
+
+  const loadBusinessHoursStatus = async () => {
+    try {
+      const response = await apiClient.ai.getBusinessHoursStatus();
+      if (response.success && response.data) {
+        setHoursStatus(response.data);
+      }
+    } catch (error) {
+      console.error("Error loading business hours status:", error);
+    }
+  };
+
+  const loadAuditLog = useCallback(async () => {
+    try {
+      setLoadingAudit(true);
+      const response = await apiClient.ai.getAuditLog({ limit: auditLimit, offset: auditOffset });
+      if (response.success && response.data) {
+        setAuditLog(response.data);
+        if (response.count !== undefined) {
+          setAuditCount(response.count);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading audit log:", error);
+      toast.error("Error al cargar el historial");
+    } finally {
+      setLoadingAudit(false);
+    }
+  }, [auditOffset]);
 
   const handleSave = async () => {
     try {
       setSaving(true);
-      // await apiClient.ai.updateConfig(config);
-
-      // Simulación de guardado
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      alert("Configuración guardada exitosamente");
-    } catch (error) {
+      const { id, created_at, updated_at, ...configToSave } = config;
+      const response = await apiClient.ai.updateConfig(configToSave);
+      if (response.success && response.data) {
+        setConfig(response.data);
+        toast.success("Configuración guardada exitosamente");
+        loadBusinessHoursStatus();
+      } else {
+        toast.error(response.message || "No se pudo guardar la configuración");
+      }
+    } catch (error: unknown) {
       console.error("Error saving config:", error);
-      alert("Error al guardar la configuración");
+      const message = error instanceof Error ? error.message : "Error al guardar la configuración";
+      toast.error(message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTogglePlatform = async (platform: string) => {
+    const isEnabled = config.platforms.includes(platform);
+    setTogglingPlatform(platform);
+
+    try {
+      const response = await apiClient.ai.togglePlatform(platform, !isEnabled);
+      if (response.success) {
+        // Update local state
+        if (isEnabled) {
+          setConfig({ ...config, platforms: config.platforms.filter(p => p !== platform) });
+        } else {
+          setConfig({ ...config, platforms: [...config.platforms, platform] });
+        }
+        toast.success(response.message || `IA ${!isEnabled ? "activada" : "desactivada"} para ${platform}`);
+      }
+    } catch (error) {
+      console.error("Error toggling platform:", error);
+      toast.error(`Error al cambiar estado de ${platform}`);
+    } finally {
+      setTogglingPlatform(null);
     }
   };
 
   const handleTestMessage = async () => {
     if (!testMessage.trim()) return;
 
+    setTesting(true);
     setTestResponse("Procesando...");
+    setTestMeta(null);
 
-    // Simulación de respuesta
-    setTimeout(() => {
-      const responses = [
-        "¡Hola! Gracias por contactar a Capriccio. Tenemos una amplia variedad de productos caseros disponibles. ¿Qué te gustaría saber?",
-        "Por supuesto, puedo ayudarte con el seguimiento de tu pedido. Por favor, proporcióname tu número de orden.",
-        "Nuestros productos más populares incluyen mermeladas artesanales, panes caseros y conservas gourmet. ¿Te gustaría ver nuestro catálogo?",
-        "El tiempo de entrega estándar es de 2-3 días hábiles dentro de la ciudad. ¿Necesitas información sobre envío express?",
-      ];
-      setTestResponse(responses[Math.floor(Math.random() * responses.length)]);
-    }, 1500);
+    try {
+      const response = await apiClient.ai.testMessage(testMessage);
+      if (response.success && response.data) {
+        setTestResponse(response.data.response);
+        setTestMeta({
+          model: response.data.model,
+          tokens_used: response.data.tokens_used,
+          response_time_ms: response.data.response_time_ms,
+        });
+      }
+    } catch (error) {
+      console.error("Error testing message:", error);
+      setTestResponse("Error al procesar el mensaje de prueba.");
+      toast.error("Error al probar el mensaje");
+    } finally {
+      setTesting(false);
+    }
   };
 
   const models = [
-    { value: "gpt-4", label: "GPT-4 (Más preciso)" },
-    { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo (Más rápido)" },
-    { value: "claude-3", label: "Claude 3 (Balanceado)" },
+    { value: "gpt-4", label: "GPT-4" },
+    { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
+    { value: "gpt-4o", label: "GPT-4o" },
+    { value: "gpt-4o-mini", label: "GPT-4o Mini (Recomendado)" },
+    { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
   ];
 
   const languages = [
     { value: "es", label: "Español" },
     { value: "en", label: "English" },
     { value: "pt", label: "Português" },
+    { value: "fr", label: "Français" },
   ];
 
   const daysOfWeek = [
@@ -170,7 +257,15 @@ export default function AIConfigPage() {
     { key: "sunday", label: "Domingo" },
   ];
 
-  if (loading) {
+  const formatChangeValue = (value: unknown): string => {
+    if (value === null || value === undefined) return "—";
+    if (typeof value === "boolean") return value ? "Activo" : "Inactivo";
+    if (typeof value === "object") return JSON.stringify(value);
+    const str = String(value);
+    return str.length > 80 ? str.substring(0, 80) + "..." : str;
+  };
+
+  if (loading || loadingConfig) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
@@ -185,12 +280,24 @@ export default function AIConfigPage() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
-            <Bot className="text-primary" size={32} />
-            Configuración de IA
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">Gestiona el asistente virtual y respuestas automáticas</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
+              <Bot className="text-primary" size={32} />
+              Configuración de IA
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">Gestiona el asistente virtual y respuestas automáticas</p>
+          </div>
+          {/* Business hours status badge */}
+          {hoursStatus && hoursStatus.businessHoursEnabled && (
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+              hoursStatus.withinHours
+                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+            }`}>
+              {hoursStatus.withinHours ? "En horario" : "Fuera de horario"}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -210,7 +317,7 @@ export default function AIConfigPage() {
             disabled={saving}
             className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50"
           >
-            <Save size={18} />
+            {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             {saving ? "Guardando..." : "Guardar Cambios"}
           </button>
         </div>
@@ -219,18 +326,19 @@ export default function AIConfigPage() {
       {/* Tabs */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md">
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <div className="flex gap-1 p-1">
+          <div className="flex gap-1 p-1 overflow-x-auto">
             {[
-              { id: "general", label: "General", icon: Settings },
-              { id: "prompt", label: "Prompts", icon: MessageSquare },
-              { id: "features", label: "Funciones", icon: Sparkles },
-              { id: "schedule", label: "Horarios", icon: Clock },
-              { id: "test", label: "Probar", icon: Zap },
+              { id: "general" as const, label: "General", icon: Settings },
+              { id: "prompt" as const, label: "Prompts", icon: MessageSquare },
+              { id: "features" as const, label: "Funciones", icon: Sparkles },
+              { id: "schedule" as const, label: "Horarios", icon: Clock },
+              { id: "test" as const, label: "Probar", icon: Zap },
+              { id: "audit" as const, label: "Historial", icon: History },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as "general" | "prompt" | "features" | "schedule" | "test")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? "bg-primary text-white"
                     : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -348,54 +456,41 @@ export default function AIConfigPage() {
                 </div>
               </div>
 
+              {/* Platform toggles */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                  API Key de OpenAI
-                </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type={showApiKey ? "text" : "password"}
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      className="w-full px-4 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-                    />
-                    <button
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                    >
-                      {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                  <button className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <Copy size={18} />
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">
                   Plataformas Habilitadas
                 </label>
-                <div className="flex flex-wrap gap-3">
-                  {["whatsapp", "messenger", "instagram", "facebook"].map((platform) => (
-                    <label key={platform} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={config.platforms.includes(platform)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setConfig({ ...config, platforms: [...config.platforms, platform] });
-                          } else {
-                            setConfig({ ...config, platforms: config.platforms.filter(p => p !== platform) });
-                          }
-                        }}
-                        className="rounded text-primary focus:ring-primary"
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-200 capitalize">{platform}</span>
-                    </label>
-                  ))}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {PLATFORMS.map((platform) => {
+                    const isEnabled = config.platforms.includes(platform);
+                    const isToggling = togglingPlatform === platform;
+                    return (
+                      <button
+                        key={platform}
+                        onClick={() => handleTogglePlatform(platform)}
+                        disabled={isToggling}
+                        className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                          isEnabled
+                            ? "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/20"
+                            : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/20"
+                        } ${isToggling ? "opacity-50" : "hover:shadow-sm"}`}
+                      >
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-100 capitalize">{platform}</span>
+                        {isToggling ? (
+                          <Loader2 size={16} className="animate-spin text-gray-400" />
+                        ) : isEnabled ? (
+                          <ToggleRight size={20} className="text-green-600" />
+                        ) : (
+                          <ToggleLeft size={20} className="text-gray-400" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Los cambios en plataformas toman efecto inmediato
+                </p>
               </div>
             </div>
           )}
@@ -537,7 +632,19 @@ export default function AIConfigPage() {
           {activeTab === "schedule" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Horario de Atención</h3>
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Horario de Atención</h3>
+                  {hoursStatus && hoursStatus.businessHoursEnabled && (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      hoursStatus.withinHours
+                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                    }`}>
+                      {hoursStatus.withinHours ? "En horario" : "Fuera de horario"}
+                      {hoursStatus.currentTime && ` (${hoursStatus.currentTime})`}
+                    </span>
+                  )}
+                </div>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -551,6 +658,14 @@ export default function AIConfigPage() {
                   <span className="text-gray-700 dark:text-gray-200">Habilitar horario de atención</span>
                 </label>
               </div>
+
+              {!config.business_hours.enabled && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                    Con el horario deshabilitado, la IA responde las 24 horas del día, los 7 días de la semana.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-3">
                 {daysOfWeek.map((day) => {
@@ -621,7 +736,7 @@ export default function AIConfigPage() {
                   <AlertCircle className="text-blue-600 dark:text-blue-400 flex-shrink-0" size={20} />
                   <div className="text-sm text-blue-800 dark:text-blue-300">
                     <p className="font-medium mb-1">Modo de Prueba</p>
-                    <p>Aquí puedes probar las respuestas del asistente con la configuración actual. Los cambios no se guardan automáticamente.</p>
+                    <p>Envía un mensaje de prueba al modelo de IA usando la configuración guardada. No se envía nada a WhatsApp.</p>
                   </div>
                 </div>
               </div>
@@ -640,11 +755,11 @@ export default function AIConfigPage() {
                   />
                   <button
                     onClick={handleTestMessage}
-                    disabled={!testMessage.trim()}
+                    disabled={!testMessage.trim() || testing}
                     className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50"
                   >
-                    <Zap size={18} />
-                    Enviar Mensaje
+                    {testing ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}
+                    {testing ? "Procesando..." : "Enviar Mensaje"}
                   </button>
                 </div>
 
@@ -659,11 +774,11 @@ export default function AIConfigPage() {
                           <Bot className="text-primary flex-shrink-0" size={20} />
                           <p className="text-gray-800 dark:text-gray-100">{testResponse}</p>
                         </div>
-                        {testResponse !== "Procesando..." && (
+                        {testMeta && (
                           <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-3">
-                            <span>Modelo: {config.model}</span>
-                            <span>Temperatura: {config.temperature}</span>
-                            <span>Tokens: ~{testResponse.split(" ").length * 2}</span>
+                            <span>Modelo: {testMeta.model}</span>
+                            <span>Tokens: {testMeta.tokens_used}</span>
+                            <span>Tiempo: {testMeta.response_time_ms}ms</span>
                           </div>
                         )}
                       </div>
@@ -674,20 +789,128 @@ export default function AIConfigPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  onClick={() => {
+                    setTestMessage("");
+                    setTestResponse("");
+                    setTestMeta(null);
+                  }}
+                  className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200"
+                >
                   <RefreshCw size={18} />
-                  Reiniciar Conversación
+                  Limpiar Prueba
                 </button>
-                <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200">
-                  <Brain size={18} />
-                  Entrenar Modelo
-                </button>
-                <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200">
-                  <Shield size={18} />
-                  Validar Configuración
+                <button
+                  onClick={loadConfig}
+                  className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200"
+                >
+                  <RefreshCw size={18} />
+                  Recargar Configuración
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Audit Tab */}
+          {activeTab === "audit" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Historial de Cambios</h3>
+                <button
+                  onClick={loadAuditLog}
+                  disabled={loadingAudit}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200"
+                >
+                  <RefreshCw size={14} className={loadingAudit ? "animate-spin" : ""} />
+                  Actualizar
+                </button>
+              </div>
+
+              {loadingAudit && auditLog.length === 0 ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 size={24} className="animate-spin text-gray-400" />
+                </div>
+              ) : auditLog.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                  <History size={48} className="mx-auto mb-3 opacity-30" />
+                  <p>No hay registros de cambios aún</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    {auditLog.map((entry) => (
+                      <div key={entry.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              entry.action === "enabled" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" :
+                              entry.action === "disabled" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
+                              entry.action === "test_run" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" :
+                              "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                            }`}>
+                              {ACTION_LABELS[entry.action] || entry.action}
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {entry.user_id.substring(0, 8)}...
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(entry.created_at).toLocaleString("es-MX", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })}
+                          </span>
+                        </div>
+
+                        {entry.changes && Object.keys(entry.changes).length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {Object.entries(entry.changes).map(([field, change]) => (
+                              <div key={field} className="text-sm flex items-start gap-2">
+                                <span className="font-medium text-gray-700 dark:text-gray-300 min-w-[120px]">
+                                  {FIELD_LABELS[field] || field}:
+                                </span>
+                                <span className="text-red-600 dark:text-red-400 line-through">
+                                  {formatChangeValue(change.old)}
+                                </span>
+                                <span className="text-gray-400">→</span>
+                                <span className="text-green-600 dark:text-green-400">
+                                  {formatChangeValue(change.new)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {auditCount > auditLimit && (
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {auditOffset + 1}-{Math.min(auditOffset + auditLimit, auditCount)} de {auditCount}
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setAuditOffset(Math.max(0, auditOffset - auditLimit))}
+                          disabled={auditOffset === 0}
+                          className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <button
+                          onClick={() => setAuditOffset(auditOffset + auditLimit)}
+                          disabled={auditOffset + auditLimit >= auditCount}
+                          className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>

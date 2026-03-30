@@ -387,17 +387,66 @@ export interface GlobalStats {
 // ============================================
 
 export interface AIConfig {
-  id: string;
-  platform: Platform;
-  ai_enabled: boolean;
-  auto_response_enabled: boolean;
-  response_delay_seconds: number;
-  max_tokens: number;
+  id: number;
+  name: string;
+  enabled: boolean;
+  model: string;
   temperature: number;
+  max_tokens: number;
   system_prompt: string;
+  welcome_message: string;
   fallback_message: string;
+  response_delay: number;
+  language: string;
+  platforms: string[];
+  business_hours: {
+    enabled: boolean;
+    schedule: Record<string, { start: string; end: string; enabled: boolean }>;
+    offline_message: string;
+  };
+  features: {
+    auto_reply: boolean;
+    order_tracking: boolean;
+    product_info: boolean;
+    price_quotes: boolean;
+    appointment_booking: boolean;
+    faq_responses: boolean;
+  };
+  knowledge_base: {
+    products: boolean;
+    services: boolean;
+    policies: boolean;
+    custom_docs: string[];
+  };
   created_at: string;
   updated_at: string;
+}
+
+export interface AITestResult {
+  response: string;
+  model: string;
+  tokens_used: number;
+  response_time_ms: number;
+}
+
+export interface AIAuditEntry {
+  id: number;
+  user_id: string;
+  platform: string;
+  action: "dashboard_updated" | "enabled" | "disabled" | "updated" | "test_run" | "api_key_updated";
+  changes: Record<string, { old: unknown; new: unknown }>;
+  ip_address: string;
+  user_agent: string;
+  created_at: string;
+}
+
+export interface AIBusinessHoursStatus {
+  withinHours: boolean;
+  businessHoursEnabled: boolean;
+  currentDay?: string;
+  currentTime?: string;
+  schedule?: { start: string; end: string; enabled: boolean };
+  offline_message: string | null;
 }
 
 export interface AILog {

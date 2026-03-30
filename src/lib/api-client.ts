@@ -22,6 +22,9 @@ import type {
   EmployeeDashboard,
   GlobalStats,
   AIConfig,
+  AITestResult,
+  AIAuditEntry,
+  AIBusinessHoursStatus,
   AILog,
   Notification,
   QuickStatsResponse,
@@ -137,19 +140,10 @@ async function fetchApi<T>(
           }
         }
 
-        // Si no se pudo renovar o no hay refresh token, cerrar sesión
-        console.warn("🚪 Token expirado. Cerrando sesión...");
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("token_expires_at");
-        localStorage.removeItem("user");
+        // Si no se pudo renovar o no hay refresh token, propagar el error
+        // El AuthContext se encarga de limpiar sesión y redirigir
+        console.warn("🚪 Token expirado. Delegando al AuthContext...");
 
-        // Redirigir al login solo si no estamos ya en la página de login
-        if (!window.location.pathname.includes("/login") && window.location.pathname !== "/") {
-          window.location.href = "/";
-        }
-
-        // Retornar promesa rechazada
         return Promise.reject(new ApiError(401, "Sesión expirada", "TOKEN_EXPIRED")) as Promise<T>;
       }
 
@@ -604,18 +598,56 @@ export const statsApi = {
 // ============================================
 
 export const aiApi = {
-  async getConfig(platform: string): Promise<ApiResponse<AIConfig>> {
-    return fetchApi<ApiResponse<AIConfig>>(`/api/ai/config/${platform}`);
+  async getConfig(): Promise<ApiResponse<AIConfig>> {
+    return fetchApi<ApiResponse<AIConfig>>("/api/ai/config");
   },
 
   async updateConfig(
-    platform: string,
     config: Partial<AIConfig>
   ): Promise<ApiResponse<AIConfig>> {
-    return fetchApi<ApiResponse<AIConfig>>(`/api/ai/config/${platform}`, {
+    return fetchApi<ApiResponse<AIConfig>>("/api/ai/config", {
       method: "PUT",
       body: JSON.stringify(config),
     });
+  },
+
+  async testMessage(message: string): Promise<ApiResponse<AITestResult>> {
+    return fetchApi<ApiResponse<AITestResult>>("/api/ai/test", {
+      method: "POST",
+      body: JSON.stringify({ message }),
+    });
+  },
+
+  async getAuditLog(
+    params?: { limit?: number; offset?: number; platform?: string }
+  ): Promise<ApiResponse<AIAuditEntry[]> & { count?: number }> {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set("limit", params.limit.toString());
+    if (params?.offset) searchParams.set("offset", params.offset.toString());
+    if (params?.platform) searchParams.set("platform", params.platform);
+    const query = searchParams.toString();
+    return fetchApi<ApiResponse<AIAuditEntry[]> & { count?: number }>(
+      `/api/ai/config/audit${query ? `?${query}` : ""}`
+    );
+  },
+
+  async togglePlatform(
+    platform: string,
+    enabled: boolean
+  ): Promise<ApiResponse<{ platform: string; enabled: boolean }>> {
+    return fetchApi<ApiResponse<{ platform: string; enabled: boolean }>>(
+      `/api/ai/config/toggle/${platform}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ enabled }),
+      }
+    );
+  },
+
+  async getBusinessHoursStatus(): Promise<ApiResponse<AIBusinessHoursStatus>> {
+    return fetchApi<ApiResponse<AIBusinessHoursStatus>>(
+      "/api/ai/config/business-hours/status"
+    );
   },
 
   async toggleConversationMode(
@@ -641,7 +673,6 @@ export const aiApi = {
     );
   },
 
-  // Nuevo endpoint según especificaciones del backend
   async setAIControl(
     platform: string,
     contactId: string,
@@ -660,7 +691,6 @@ export const aiApi = {
     );
   },
 
-  // Nuevo endpoint para consultar estado de IA
   async getAIStatus(
     platform: string,
     contactId: string

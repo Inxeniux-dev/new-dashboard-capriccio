@@ -31,7 +31,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = localStorage.getItem("auth_token");
 
         if (storedUser && token) {
-          // Intentar validar el token obteniendo el perfil
+          // Cargar usuario del cache inmediatamente para evitar flash de login
+          const cachedUser = JSON.parse(storedUser) as User;
+          setUser(cachedUser);
+
+          // Intentar validar el token obteniendo el perfil en background
           try {
             const profileResponse = await apiClient.auth.getProfile();
 
@@ -39,16 +43,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // Token válido - actualizar usuario con datos frescos del servidor
               setUser(profileResponse.data);
               localStorage.setItem("user", JSON.stringify(profileResponse.data));
-            } else {
-              // Token inválido - limpiar sesión
-              throw new Error("Token inválido");
             }
-          } catch (profileError) {
-            // Si falla la validación, limpiar sesión
-            console.warn("Token expirado o inválido. Limpiando sesión...");
-            localStorage.removeItem("user");
-            localStorage.removeItem("auth_token");
-            setUser(null);
+          } catch (profileError: unknown) {
+            const err = profileError as { status?: number; code?: string };
+            // Solo limpiar sesión si es un error de autenticación explícito (401)
+            if (err.status === 401 || err.code === "TOKEN_EXPIRED" || err.code === "INVALID_TOKEN") {
+              console.warn("Token expirado o inválido. Limpiando sesión...");
+              localStorage.removeItem("user");
+              localStorage.removeItem("auth_token");
+              localStorage.removeItem("refresh_token");
+              localStorage.removeItem("token_expires_at");
+              setUser(null);
+            } else {
+              // Error de red u otro - mantener sesión con datos cacheados
+              console.warn("No se pudo validar el token, usando datos cacheados:", profileError);
+            }
           }
         }
       } catch (error) {
